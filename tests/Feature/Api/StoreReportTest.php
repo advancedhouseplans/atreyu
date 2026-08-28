@@ -1,0 +1,83 @@
+<?php
+
+// tests/Feature/Api/StoreReportTest.php
+
+use App\Models\Report;
+use App\Services\SourceContextFetcher;
+use Illuminate\Http\Testing\File;
+use Illuminate\Support\Facades\Storage;
+
+beforeEach(function () {
+    config()->set('bug-sources.ahp', ['name' => 'AHP', 'endpoint' => 'https://ahp.test', 'secret' => 'topsecret']);
+    Storage::fake('local');
+});
+
+function bearer(array $payload = [], string $secret = 'topsecret'): string
+{
+    $payload = array_merge([
+        'source_slug' => 'ahp', 'env' => 'production', 'endpoint' => 'https://ahp.test',
+        'user_id' => 42, 'user_email' => 'reporter@ahp.test', 'user_name' => 'Reporter', 'exp' => time() + 60,
+    ], $payload);
+    $b64 = fn ($x) => rtrim(strtr(base64_encode($x), '+/', '-_'), '=');
+    $body = $b64(json_encode($payload));
+    $sig = $b64(hash_hmac('sha256', $body, $secret, true));
+
+    return "Bearer {$body}.{$sig}";
+}
+
+it('rejects unauthenticated submission', function () {
+    $this->postJson('/api/reports', [])->assertStatus(401);
+});
+
+it('creates a report from valid submission', function () {
+    $this->mock(SourceContextFetcher::class)
+        ->shouldReceive('fetch')->once()
+        ->with('ahp', ['id1', 'id2'])
+        ->andReturn(['id1' => ['route_name' => 'x'], 'id2' => null]);
+
+    $metadata = json_encode([
+        'url' => 'https://ahp.test/plans/1', 'referrer' => null, 'title' => 'plan',
+        'screen_wh' => '1920x1080', 'viewport_wh' => '1440x900', 'dpr' => 2.0,
+        'timezone' => 'America/New_York', 'locale' => 'en-US',
+        'user_agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'app_version' => '1.2.3',
+        'network_log' => [['method' => 'GET', 'url' => '/x', 'status' => 200, 'debug_id' => 'id1']],
+        'client_events' => [['type' => 'error', 'message' => 'boom']],
+        'debug_ids' => ['id1', 'id2'],
+    ]);
+
+    $resp = $this->withHeader('Authorization', bearer())->post('/api/reports', [
+        'title' => 'Broken thing',
+        'description' => 'It broke',
+        'type' => 'bug',
+        'severity' => 'high',
+        'metadata' => $metadata,
+        'snapshot' => File::image('snap.jpg', 100, 100),
+        'attachments' => [File::create('note.txt', 5)],
+    ]);
+
+    $resp->assertCreated()->assertJsonStructure(['report_id']);
+
+    $r = Report::first();
+    expect($r->source_slug)->toBe('ahp')
+        ->and($r->reporter_email)->toBe('reporter@ahp.test')
+        ->and($r->title)->toBe('Broken thing')
+        ->and($r->browser)->toBe('Chrome')
+        ->and($r->laravel_context)->toBe([['id' => 'id1', 'context' => ['route_name' => 'x']], ['id' => 'id2', 'context' => null]])
+        ->and($r->attachments)->toHaveCount(2);
+});
+
+it('rate-limits after 10 submissions', function () {
+    $this->mock(SourceContextFetcher::class)->shouldReceive('fetch')->andReturn([]);
+    $auth = ['Authorization' => bearer()];
+
+    for ($i = 0; $i < 10; $i++) {
+        $this->withHeaders($auth)->post('/api/reports', [
+            'title' => 't', 'description' => 'd', 'type' => 'bug', 'severity' => 'low',
+            'metadata' => '{}',
+        ])->assertCreated();
+    }
+    $this->withHeaders($auth)->post('/api/reports', [
+        'title' => 't', 'description' => 'd', 'type' => 'bug', 'severity' => 'low', 'metadata' => '{}',
+    ])->assertStatus(429);
+});
