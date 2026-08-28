@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4d9b9c6155b3340e850ce5bc18d4d01f",
+    "content-hash": "08d316b9470ca0ef8d17dde38c467225",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -7791,6 +7791,49 @@
     ],
     "packages-dev": [
         {
+            "name": "ahp/bug-companion",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/bug-companion",
+                "reference": "4153552b1f499248d4d27a86d02cc48fbb5c4b43"
+            },
+            "require": {
+                "illuminate/cache": "^13.0",
+                "illuminate/http": "^13.0",
+                "illuminate/routing": "^13.0",
+                "illuminate/support": "^13.0",
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^11.0",
+                "pestphp/pest": "^5.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "BugCompanion\\BugCompanionServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "BugCompanion\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "BugCompanion\\Tests\\": "tests/"
+                }
+            },
+            "description": "Bug/feature-report companion for Laravel source apps",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "brianium/paratest",
             "version": "v7.24.1",
             "source": {
@@ -11683,7 +11726,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "ahp/bug-companion": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

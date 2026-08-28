@@ -19,7 +19,11 @@
         "livewire/livewire": "^4.1",
         "whichbrowser/parser": "^2.1"
     },
+    "repositories": [
+        { "type": "path", "url": "packages/bug-companion", "options": { "symlink": true } }
+    ],
     "require-dev": {
+        "ahp/bug-companion": "@dev",
         "fakerphp/faker": "^1.24",
         "larastan/larastan": "^3.9",
         "laravel/boost": "^2.2",
