@@ -1,0 +1,1 @@
+(function(){(function(){typeof window>`u`||(window.__bugWidgetLoaded=!0)})()})();

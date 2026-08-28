@@ -4,12 +4,15 @@
     "type": "module",
     "scripts": {
         "build": "vp build",
-        "dev": "vp dev"
+        "dev": "vp dev",
+        "build:widget": "vite build --config vite.widget.config.js",
+        "test:widget": "vitest run --config vite.widget.config.js"
     },
     "dependencies": {
         "@laravel/passkeys": "^0.2.0",
         "@tailwindcss/vite": "^4.1.11",
         "concurrently": "^10.0.3",
+        "html2canvas": "^1.4.1",
         "laravel-vite-plugin": "^3.1",
         "tailwindcss": "^4.0.7",
         "vite": "^8.0.0",
@@ -20,5 +23,10 @@
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.62.1",
+        "jsdom": "^29.1.1",
+        "vitest": "^4.1.11"
     }
 }
