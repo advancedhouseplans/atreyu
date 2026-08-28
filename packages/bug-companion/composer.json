@@ -4,10 +4,10 @@
     "description": "Bug/feature-report companion for Laravel source apps",
     "require": {
         "php": "^8.3",
-        "illuminate/support": "^13.0",
-        "illuminate/http": "^13.0",
-        "illuminate/routing": "^13.0",
-        "illuminate/cache": "^13.0"
+        "illuminate/support": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/http": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/routing": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/cache": "^11.0 || ^12.0 || ^13.0"
     },
     "require-dev": {
         "orchestra/testbench": "^11.0",
