@@ -29,6 +29,10 @@ class BugCompanionServiceProvider extends ServiceProvider
             __DIR__.'/../config/bug-companion.php' => config_path('bug-companion.php'),
         ], 'bug-companion-config');
 
+        $this->publishes([
+            __DIR__.'/../resources/views/errors' => resource_path('views/errors'),
+        ], 'bug-companion-errors');
+
         $router->aliasMiddleware('bugs.callback', VerifyBugsCallback::class);
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
