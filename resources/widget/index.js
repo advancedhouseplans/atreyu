@@ -24,39 +24,45 @@ import { submit } from './lib/submit.js';
             config,
             onSubmit: async (formData, { close, disable, enable }) => {
                 disable();
-                let snap = null;
-                try { snap = await snapshot(); } catch (_) { /* ignore */ }
+                try {
+                    let snap = null;
+                    try { snap = await snapshot(); } catch (_) { /* ignore */ }
 
-                const network = netRing.toArray();
-                const debugIds = Array.from(new Set(network.map(x => x.debug_id).filter(Boolean)));
+                    const network = netRing.toArray();
+                    const debugIds = Array.from(new Set(network.map(x => x.debug_id).filter(Boolean)));
 
-                const metadata = {
-                    url: location.href,
-                    referrer: document.referrer || null,
-                    title: document.title,
-                    screen_wh: `${screen.width}x${screen.height}`,
-                    viewport_wh: `${innerWidth}x${innerHeight}`,
-                    dpr: devicePixelRatio,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    locale: navigator.language,
-                    user_agent: navigator.userAgent,
-                    app_version: document.querySelector('meta[name=app-version]')?.getAttribute('content') || null,
-                    network_log: network,
-                    client_events: eventRing.toArray(),
-                    debug_ids: debugIds,
-                };
+                    const metadata = {
+                        url: location.href,
+                        referrer: document.referrer || null,
+                        title: document.title,
+                        screen_wh: `${screen.width}x${screen.height}`,
+                        viewport_wh: `${innerWidth}x${innerHeight}`,
+                        dpr: devicePixelRatio,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        locale: navigator.language,
+                        user_agent: navigator.userAgent,
+                        app_version: document.querySelector('meta[name=app-version]')?.getAttribute('content') || null,
+                        network_log: network,
+                        client_events: eventRing.toArray(),
+                        debug_ids: debugIds,
+                    };
 
-                const result = await submit({
-                    endpoint: config.endpoint, token: config.token,
-                    formData, metadata, snapshotBlob: snap,
-                });
+                    const result = await submit({
+                        endpoint: config.endpoint, token: config.token,
+                        formData, metadata, snapshotBlob: snap,
+                    });
 
-                enable();
-                if (result.ok) {
-                    close();
-                    alert('Report sent — thanks!');
-                } else {
-                    alert(`Failed to send (status ${result.status}). Please try again.`);
+                    if (result.ok) {
+                        close();
+                        alert('Report sent — thanks!');
+                    } else {
+                        alert(`Failed to send (status ${result.status}). Please try again.`);
+                    }
+                } catch (e) {
+                    alert('Failed to send. Please try again.');
+                    console.error(e);
+                } finally {
+                    enable();
                 }
             },
         });
