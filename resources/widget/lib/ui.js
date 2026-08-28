@@ -14,8 +14,8 @@ const STYLE = `
     .bug-toggle:hover,
     .bug-toggle.working { width: 84px; height: 84px; }
     .bug-toggle-arc {
-        position: absolute; right: 0; bottom: 0;
-        width: 48px; height: 48px;
+        position: absolute; right: 2px; bottom: 2px;
+        width: 24px; height: 24px;
         opacity: 1; pointer-events: none;
         transition: opacity .14s ease-out;
     }
@@ -105,8 +105,8 @@ export function mountUi({ config, onSubmit, onCapture }) {
 
     root.innerHTML += `
         <button class="bug-toggle" title="Report a bug" aria-label="Report a bug">
-            <svg class="bug-toggle-arc" viewBox="0 0 48 48" aria-hidden="true">
-                <path d="M 4 48 A 44 44 0 0 0 48 4"
+            <svg class="bug-toggle-arc" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M 2 24 A 22 22 0 0 0 24 2"
                     fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
             </svg>
             <span class="bug-toggle-shell">
