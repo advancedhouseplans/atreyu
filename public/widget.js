@@ -14,7 +14,7 @@
     .bug-toggle:hover,
     .bug-toggle.working { width: 84px; height: 84px; }
     .bug-toggle-arc {
-        position: absolute; right: 2px; bottom: 2px;
+        position: absolute; right: 6px; bottom: 6px;
         width: 24px; height: 24px;
         opacity: 1; pointer-events: none;
         transition: opacity .14s ease-out;
