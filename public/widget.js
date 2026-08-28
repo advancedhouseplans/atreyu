@@ -1,22 +1,22 @@
 (function(){var e=class{constructor(e){this.size=e,this.items=[]}push(e){this.size<=0||(this.items.push(e),this.items.length>this.size&&this.items.splice(0,this.items.length-this.size))}toArray(){return this.items.slice()}};function t({ring:e,skipUrlPrefix:t}){let n=globalThis.fetch;if(globalThis.fetch=async function(r,i){let a=typeof r==`string`?r:r&&r.url||``,o=i&&i.method||r&&r.method||`GET`;if(t&&a.startsWith(t))return n(r,i);let s=performance.now();try{let t=await n(r,i);return e.push({method:o,url:a,status:t.status,duration_ms:Math.round(performance.now()-s),ts:Date.now(),debug_id:t.headers.get(`X-Debug-Id`)||null}),t}catch(t){throw e.push({method:o,url:a,status:0,duration_ms:Math.round(performance.now()-s),ts:Date.now(),debug_id:null}),t}},typeof XMLHttpRequest<`u`){let n=XMLHttpRequest.prototype.open,r=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(e,t){return this.__bug={method:e,url:t,start:0},n.apply(this,arguments)},XMLHttpRequest.prototype.send=function(){return!this.__bug||t&&this.__bug.url.startsWith(t)?r.apply(this,arguments):(this.__bug.start=performance.now(),this.addEventListener(`loadend`,()=>{e.push({method:this.__bug.method,url:this.__bug.url,status:this.status,duration_ms:Math.round(performance.now()-this.__bug.start),ts:Date.now(),debug_id:this.getResponseHeader(`X-Debug-Id`)||null})}),r.apply(this,arguments))}}}function n({ring:e}){window.addEventListener(`error`,t=>{e.push({type:`error`,message:t.message,filename:t.filename,lineno:t.lineno,colno:t.colno,stack:t.error?.stack||null,ts:Date.now()})}),window.addEventListener(`unhandledrejection`,t=>{e.push({type:`unhandledrejection`,message:String(t.reason?.message??t.reason??``),stack:t.reason?.stack||null,ts:Date.now()})}),[`error`,`warn`].forEach(t=>{let n=console[t].bind(console);console[t]=function(...r){try{e.push({type:`console.${t}`,message:r.map(e=>typeof e==`string`?e:JSON.stringify(e)).join(` `),ts:Date.now()})}catch{}return n(...r)}}),window.addEventListener(`popstate`,()=>e.push({type:`nav.popstate`,url:location.href,ts:Date.now()})),window.addEventListener(`hashchange`,()=>e.push({type:`nav.hashchange`,url:location.href,ts:Date.now()}));let t=history.pushState.bind(history);history.pushState=function(n,r,i){return e.push({type:`nav.pushState`,url:String(i||location.href),ts:Date.now()}),t(n,r,i)}}function r(e){if(!e)return null;let t=e.getAttribute(`data-config`);if(!t)return null;let[n]=t.split(`.`);if(!n)return null;try{let e=n.length%4?`=`.repeat(4-n.length%4):``,r=atob(n.replaceAll(`-`,`+`).replaceAll(`_`,`/`)+e);return{...JSON.parse(r),token:t}}catch{return null}}var i=`
     :host { all: initial; }
-    /* Ambient dot that reveals into a full pill on hover (option B). */
+    /* Edge tab: vertical sliver hugs the right edge, animates outward on hover. */
     .bug-toggle {
-        position: fixed; bottom: 8px; right: 8px;
-        width: 56px; height: 56px; padding: 0;
+        position: fixed; right: 0; bottom: 25%;
+        width: 56px; height: 64px; padding: 0;
         border: 0; background: transparent; cursor: pointer;
         z-index: 2147483647;
-        display: flex; align-items: center; justify-content: center;
+        display: flex; align-items: center; justify-content: flex-end;
     }
     .bug-toggle-shell {
-        width: 8px; height: 8px; border-radius: 50%;
-        background: #d33;
-        box-shadow: 0 0 0 0 rgba(211, 51, 51, .55);
-        transition: width .32s cubic-bezier(.34, 1.56, .64, 1),
-                    height .32s cubic-bezier(.34, 1.56, .64, 1),
-                    border-radius .32s cubic-bezier(.34, 1.56, .64, 1),
-                    box-shadow .32s ease-out;
-        animation: bug-idle-pulse 2.4s ease-in-out infinite;
+        width: 4px; height: 48px;
+        background: #d33; border-radius: 4px 0 0 4px;
+        box-shadow: -2px 4px 12px rgba(0, 0, 0, .18);
+        transition: width .35s cubic-bezier(.34, 1.56, .64, 1),
+                    height .35s cubic-bezier(.34, 1.56, .64, 1),
+                    border-radius .35s cubic-bezier(.34, 1.56, .64, 1),
+                    box-shadow .35s ease-out,
+                    background .2s ease-out;
         position: relative;
         display: flex; align-items: center; justify-content: center;
         overflow: hidden;
@@ -32,21 +32,31 @@
         border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
         animation: bug-spin .8s linear infinite;
     }
-    /* Expanded state: hover on the invisible hit area OR the .working state */
+    /* Expanded state on hover OR working state — steps out from the edge into a pill. */
     .bug-toggle:hover .bug-toggle-shell,
     .bug-toggle.working .bug-toggle-shell {
-        width: 40px; height: 40px; border-radius: 20px;
-        animation: none;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+        width: 44px; height: 44px;
+        border-radius: 22px 0 0 22px;
+        background: #d33;
+        box-shadow: -12px 12px 28px rgba(0, 0, 0, .35),
+                    0 0 0 1px rgba(255, 255, 255, .06);
     }
     .bug-toggle:hover .bug-toggle-icon { opacity: 1; transition-delay: .1s; }
     .bug-toggle.working .bug-toggle-spin { opacity: 1; transition-delay: .1s; }
     .bug-toggle.working .bug-toggle-icon { opacity: 0 !important; transition-delay: 0s; }
     .bug-toggle[disabled] { cursor: wait; }
-    @keyframes bug-idle-pulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(211, 51, 51, .55); }
-        50%      { box-shadow: 0 0 0 7px rgba(211, 51, 51, 0); }
+    /* Soft blur/gradient underneath the pill, only when expanded. */
+    .bug-toggle::before {
+        content: '';
+        position: absolute; right: -8px; bottom: -12px;
+        width: 80px; height: 80px;
+        background: radial-gradient(closest-side, rgba(211, 51, 51, .28), transparent 70%);
+        filter: blur(10px);
+        opacity: 0; pointer-events: none;
+        transition: opacity .35s ease-out;
     }
+    .bug-toggle:hover::before,
+    .bug-toggle.working::before { opacity: 1; }
     .bug-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
         z-index: 2147483647; align-items: center; justify-content: center; }
     .bug-modal.open { display: flex; }

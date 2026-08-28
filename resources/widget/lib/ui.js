@@ -1,22 +1,22 @@
 const STYLE = `
     :host { all: initial; }
-    /* Ambient dot that reveals into a full pill on hover (option B). */
+    /* Edge tab: vertical sliver hugs the right edge, animates outward on hover. */
     .bug-toggle {
-        position: fixed; bottom: 8px; right: 8px;
-        width: 56px; height: 56px; padding: 0;
+        position: fixed; right: 0; bottom: 25%;
+        width: 56px; height: 64px; padding: 0;
         border: 0; background: transparent; cursor: pointer;
         z-index: 2147483647;
-        display: flex; align-items: center; justify-content: center;
+        display: flex; align-items: center; justify-content: flex-end;
     }
     .bug-toggle-shell {
-        width: 8px; height: 8px; border-radius: 50%;
-        background: #d33;
-        box-shadow: 0 0 0 0 rgba(211, 51, 51, .55);
-        transition: width .32s cubic-bezier(.34, 1.56, .64, 1),
-                    height .32s cubic-bezier(.34, 1.56, .64, 1),
-                    border-radius .32s cubic-bezier(.34, 1.56, .64, 1),
-                    box-shadow .32s ease-out;
-        animation: bug-idle-pulse 2.4s ease-in-out infinite;
+        width: 4px; height: 48px;
+        background: #d33; border-radius: 4px 0 0 4px;
+        box-shadow: -2px 4px 12px rgba(0, 0, 0, .18);
+        transition: width .35s cubic-bezier(.34, 1.56, .64, 1),
+                    height .35s cubic-bezier(.34, 1.56, .64, 1),
+                    border-radius .35s cubic-bezier(.34, 1.56, .64, 1),
+                    box-shadow .35s ease-out,
+                    background .2s ease-out;
         position: relative;
         display: flex; align-items: center; justify-content: center;
         overflow: hidden;
@@ -32,21 +32,31 @@ const STYLE = `
         border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
         animation: bug-spin .8s linear infinite;
     }
-    /* Expanded state: hover on the invisible hit area OR the .working state */
+    /* Expanded state on hover OR working state — steps out from the edge into a pill. */
     .bug-toggle:hover .bug-toggle-shell,
     .bug-toggle.working .bug-toggle-shell {
-        width: 40px; height: 40px; border-radius: 20px;
-        animation: none;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+        width: 44px; height: 44px;
+        border-radius: 22px 0 0 22px;
+        background: #d33;
+        box-shadow: -12px 12px 28px rgba(0, 0, 0, .35),
+                    0 0 0 1px rgba(255, 255, 255, .06);
     }
     .bug-toggle:hover .bug-toggle-icon { opacity: 1; transition-delay: .1s; }
     .bug-toggle.working .bug-toggle-spin { opacity: 1; transition-delay: .1s; }
     .bug-toggle.working .bug-toggle-icon { opacity: 0 !important; transition-delay: 0s; }
     .bug-toggle[disabled] { cursor: wait; }
-    @keyframes bug-idle-pulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(211, 51, 51, .55); }
-        50%      { box-shadow: 0 0 0 7px rgba(211, 51, 51, 0); }
+    /* Soft blur/gradient underneath the pill, only when expanded. */
+    .bug-toggle::before {
+        content: '';
+        position: absolute; right: -8px; bottom: -12px;
+        width: 80px; height: 80px;
+        background: radial-gradient(closest-side, rgba(211, 51, 51, .28), transparent 70%);
+        filter: blur(10px);
+        opacity: 0; pointer-events: none;
+        transition: opacity .35s ease-out;
     }
+    .bug-toggle:hover::before,
+    .bug-toggle.working::before { opacity: 1; }
     .bug-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
         z-index: 2147483647; align-items: center; justify-content: center; }
     .bug-modal.open { display: flex; }
