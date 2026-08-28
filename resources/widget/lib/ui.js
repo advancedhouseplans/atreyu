@@ -1,12 +1,52 @@
 const STYLE = `
     :host { all: initial; }
-    .bug-toggle { position: fixed; bottom: 16px; right: 16px; width: 40px; height: 40px;
-        border-radius: 20px; border: 0; background: #d33; color: #fff; font: 600 14px/40px system-ui;
-        cursor: pointer; z-index: 2147483647; text-align: center; }
-    .bug-toggle[disabled] { cursor: wait; background: #a22; }
-    .bug-toggle .bug-toggle-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff;
-        border-top-color: transparent; border-radius: 50%; animation: bug-spin .8s linear infinite;
-        vertical-align: middle; }
+    /* Ambient dot that reveals into a full pill on hover (option B). */
+    .bug-toggle {
+        position: fixed; bottom: 8px; right: 8px;
+        width: 56px; height: 56px; padding: 0;
+        border: 0; background: transparent; cursor: pointer;
+        z-index: 2147483647;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .bug-toggle-shell {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: #d33;
+        box-shadow: 0 0 0 0 rgba(211, 51, 51, .55);
+        transition: width .32s cubic-bezier(.34, 1.56, .64, 1),
+                    height .32s cubic-bezier(.34, 1.56, .64, 1),
+                    border-radius .32s cubic-bezier(.34, 1.56, .64, 1),
+                    box-shadow .32s ease-out;
+        animation: bug-idle-pulse 2.4s ease-in-out infinite;
+        position: relative;
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+    }
+    .bug-toggle-icon,
+    .bug-toggle-spin {
+        position: absolute; opacity: 0;
+        transition: opacity .18s ease-out;
+    }
+    .bug-toggle-icon { font: 20px/1 system-ui; }
+    .bug-toggle-spin {
+        width: 14px; height: 14px;
+        border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
+        animation: bug-spin .8s linear infinite;
+    }
+    /* Expanded state: hover on the invisible hit area OR the .working state */
+    .bug-toggle:hover .bug-toggle-shell,
+    .bug-toggle.working .bug-toggle-shell {
+        width: 40px; height: 40px; border-radius: 20px;
+        animation: none;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+    }
+    .bug-toggle:hover .bug-toggle-icon { opacity: 1; transition-delay: .1s; }
+    .bug-toggle.working .bug-toggle-spin { opacity: 1; transition-delay: .1s; }
+    .bug-toggle.working .bug-toggle-icon { opacity: 0 !important; transition-delay: 0s; }
+    .bug-toggle[disabled] { cursor: wait; }
+    @keyframes bug-idle-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(211, 51, 51, .55); }
+        50%      { box-shadow: 0 0 0 7px rgba(211, 51, 51, 0); }
+    }
     .bug-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
         z-index: 2147483647; align-items: center; justify-content: center; }
     .bug-modal.open { display: flex; }
@@ -41,7 +81,12 @@ export function mountUi({ config, onSubmit, onCapture }) {
     root.appendChild(style);
 
     root.innerHTML += `
-        <button class="bug-toggle" title="Report a bug">🐞</button>
+        <button class="bug-toggle" title="Report a bug" aria-label="Report a bug">
+            <span class="bug-toggle-shell">
+                <span class="bug-toggle-icon">🐞</span>
+                <span class="bug-toggle-spin"></span>
+            </span>
+        </button>
         <div class="bug-modal" role="dialog" aria-modal="true">
             <div class="bug-card">
                 <h2 style="margin:0">Report a bug or request</h2>
@@ -86,11 +131,10 @@ export function mountUi({ config, onSubmit, onCapture }) {
     async function open() {
         if (toggle.disabled) { return; }
         toggle.disabled = true;
-        const previousToggleHtml = toggle.innerHTML;
-        toggle.innerHTML = '<span class="bug-toggle-spin"></span>';
+        toggle.classList.add('working');
         preview.innerHTML = 'Capturing…';
-        // Yield to browser so the spinner + disabled state actually paint
-        // before html2canvas locks the main thread.
+        // Yield to browser so the working state paints before html2canvas
+        // locks the main thread.
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         try {
             if (onCapture) {
@@ -101,7 +145,7 @@ export function mountUi({ config, onSubmit, onCapture }) {
             setPreview(null);
         } finally {
             toggle.disabled = false;
-            toggle.innerHTML = previousToggleHtml;
+            toggle.classList.remove('working');
         }
         modal.classList.add('open');
     }
