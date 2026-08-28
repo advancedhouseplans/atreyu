@@ -4,7 +4,7 @@ test('widget submits a report', async ({ page }) => {
     let posted = null;
     await page.route('https://bugs.test/api/reports', async (route) => {
         const req = route.request();
-        posted = { url: req.url(), headers: req.headers(), postData: await req.postDataBuffer() };
+        posted = { url: req.url(), headers: req.headers(), postData: req.postDataBuffer() };
         route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ report_id: 1 }) });
     });
 
