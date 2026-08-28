@@ -94,7 +94,7 @@
 `;function a({config:e,onSubmit:t,onCapture:n}){let r=document.createElement(`div`);r.id=`bug-widget-root`,(document.body||document.documentElement).appendChild(r);let a=r.attachShadow({mode:`open`}),s=document.createElement(`style`);s.textContent=i,a.appendChild(s),a.innerHTML+=`
         <button class="bug-toggle" title="Report a bug" aria-label="Report a bug">
             <svg class="bug-toggle-arc" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M 2 24 A 22 22 0 0 0 24 2"
+                <path d="M 4 22 A 20 20 0 0 0 22 4"
                     fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
             </svg>
             <span class="bug-toggle-shell">
