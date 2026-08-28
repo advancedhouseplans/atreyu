@@ -1,31 +1,27 @@
 (function(){var e=class{constructor(e){this.size=e,this.items=[]}push(e){this.size<=0||(this.items.push(e),this.items.length>this.size&&this.items.splice(0,this.items.length-this.size))}toArray(){return this.items.slice()}};function t({ring:e,skipUrlPrefix:t}){let n=globalThis.fetch;if(globalThis.fetch=async function(r,i){let a=typeof r==`string`?r:r&&r.url||``,o=i&&i.method||r&&r.method||`GET`;if(t&&a.startsWith(t))return n(r,i);let s=performance.now();try{let t=await n(r,i);return e.push({method:o,url:a,status:t.status,duration_ms:Math.round(performance.now()-s),ts:Date.now(),debug_id:t.headers.get(`X-Debug-Id`)||null}),t}catch(t){throw e.push({method:o,url:a,status:0,duration_ms:Math.round(performance.now()-s),ts:Date.now(),debug_id:null}),t}},typeof XMLHttpRequest<`u`){let n=XMLHttpRequest.prototype.open,r=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(e,t){return this.__bug={method:e,url:t,start:0},n.apply(this,arguments)},XMLHttpRequest.prototype.send=function(){return!this.__bug||t&&this.__bug.url.startsWith(t)?r.apply(this,arguments):(this.__bug.start=performance.now(),this.addEventListener(`loadend`,()=>{e.push({method:this.__bug.method,url:this.__bug.url,status:this.status,duration_ms:Math.round(performance.now()-this.__bug.start),ts:Date.now(),debug_id:this.getResponseHeader(`X-Debug-Id`)||null})}),r.apply(this,arguments))}}}function n({ring:e}){window.addEventListener(`error`,t=>{e.push({type:`error`,message:t.message,filename:t.filename,lineno:t.lineno,colno:t.colno,stack:t.error?.stack||null,ts:Date.now()})}),window.addEventListener(`unhandledrejection`,t=>{e.push({type:`unhandledrejection`,message:String(t.reason?.message??t.reason??``),stack:t.reason?.stack||null,ts:Date.now()})}),[`error`,`warn`].forEach(t=>{let n=console[t].bind(console);console[t]=function(...r){try{e.push({type:`console.${t}`,message:r.map(e=>typeof e==`string`?e:JSON.stringify(e)).join(` `),ts:Date.now()})}catch{}return n(...r)}}),window.addEventListener(`popstate`,()=>e.push({type:`nav.popstate`,url:location.href,ts:Date.now()})),window.addEventListener(`hashchange`,()=>e.push({type:`nav.hashchange`,url:location.href,ts:Date.now()}));let t=history.pushState.bind(history);history.pushState=function(n,r,i){return e.push({type:`nav.pushState`,url:String(i||location.href),ts:Date.now()}),t(n,r,i)}}function r(e){if(!e)return null;let t=e.getAttribute(`data-config`);if(!t)return null;let[n]=t.split(`.`);if(!n)return null;try{let e=n.length%4?`=`.repeat(4-n.length%4):``,r=atob(n.replaceAll(`-`,`+`).replaceAll(`_`,`/`)+e);return{...JSON.parse(r),token:t}}catch{return null}}var i=`
     :host { all: initial; }
-    /* Edge tab pinned to bottom-right. Hit area = only the visible sliver.
-       On hover the whole thing pops off the edge into a circle. */
+    /* Edge tab pinned to bottom-right. Only horizontal motion — height is
+       locked so there's no vertical drift. */
     .bug-toggle {
         position: fixed; right: 0; bottom: 24px;
         width: 4px; height: 48px;
         padding: 0; border: 0; background: transparent; cursor: pointer;
         z-index: 2147483647; color: #fff;
         display: flex; align-items: center; justify-content: flex-end;
-        transition: width .38s cubic-bezier(.34, 1.56, .64, 1),
-                    height .38s cubic-bezier(.34, 1.56, .64, 1);
+        transition: width .19s cubic-bezier(.22, 1, .36, 1);
     }
     .bug-toggle:hover,
-    .bug-toggle.working {
-        width: 64px; height: 60px;
-    }
+    .bug-toggle.working { width: 64px; }
     .bug-toggle-shell {
         width: 4px; height: 48px;
         background: #ef4444; /* tailwind red-500 */
         border-radius: 4px 0 0 4px;
         margin-right: 0;
         box-shadow: -2px 4px 10px rgba(0, 0, 0, .18);
-        transition: width .38s cubic-bezier(.34, 1.56, .64, 1),
-                    height .38s cubic-bezier(.34, 1.56, .64, 1),
-                    border-radius .38s cubic-bezier(.34, 1.56, .64, 1),
-                    margin-right .38s cubic-bezier(.34, 1.56, .64, 1),
-                    box-shadow .38s ease-out;
+        transition: width .19s cubic-bezier(.22, 1, .36, 1),
+                    border-radius .19s cubic-bezier(.22, 1, .36, 1),
+                    margin-right .19s cubic-bezier(.22, 1, .36, 1),
+                    box-shadow .19s ease-out;
         position: relative;
         display: flex; align-items: center; justify-content: center;
         overflow: hidden;
@@ -33,7 +29,7 @@
     .bug-toggle-icon,
     .bug-toggle-spin {
         position: absolute; opacity: 0;
-        transition: opacity .18s ease-out;
+        transition: opacity .14s ease-out;
     }
     .bug-toggle-icon { color: #fff; line-height: 0; }
     .bug-toggle-icon svg { width: 18px; height: 18px; display: block; fill: currentColor; }
@@ -42,31 +38,33 @@
         border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
         animation: bug-spin .8s linear infinite;
     }
-    /* Expanded: pops off the edge and turns into a circle. */
+    /* Expanded: shell grows horizontally into a 48×48 circle (same height). */
     .bug-toggle:hover .bug-toggle-shell,
     .bug-toggle.working .bug-toggle-shell {
-        width: 44px; height: 44px;
+        width: 48px;
         border-radius: 50%;
         margin-right: 8px;
         box-shadow: -10px 12px 28px rgba(0, 0, 0, .35),
                     0 0 0 1px rgba(255, 255, 255, .06);
     }
-    .bug-toggle:hover .bug-toggle-icon { opacity: 1; transition-delay: .12s; }
-    .bug-toggle.working .bug-toggle-spin { opacity: 1; transition-delay: .12s; }
+    .bug-toggle:hover .bug-toggle-icon { opacity: 1; transition-delay: .08s; }
+    .bug-toggle.working .bug-toggle-spin { opacity: 1; transition-delay: .08s; }
     .bug-toggle.working .bug-toggle-icon { opacity: 0 !important; transition-delay: 0s; }
     .bug-toggle[disabled] { cursor: wait; }
-    /* Soft red glow behind the circle when expanded. */
-    .bug-toggle::before {
-        content: '';
-        position: absolute; right: 0; bottom: -8px;
-        width: 80px; height: 76px;
-        background: radial-gradient(closest-side, rgba(239, 68, 68, .32), transparent 70%);
-        filter: blur(10px);
-        opacity: 0; pointer-events: none;
-        transition: opacity .38s ease-out;
+    /* Viewport-corner black radial glow — fades in when widget expands. */
+    .bug-corner-glow {
+        position: fixed; right: 0; bottom: 0;
+        width: 200px; height: 200px;
+        pointer-events: none; z-index: 2147483646;
+        background: radial-gradient(circle at 100% 100%,
+            rgba(0, 0, 0, .8) 0,
+            rgba(0, 0, 0, .5) 40px,
+            rgba(0, 0, 0, 0) 100px);
+        opacity: 0;
+        transition: opacity .19s cubic-bezier(.22, 1, .36, 1);
     }
-    .bug-toggle:hover::before,
-    .bug-toggle.working::before { opacity: 1; }
+    .bug-toggle:hover ~ .bug-corner-glow,
+    .bug-toggle.working ~ .bug-corner-glow { opacity: 1; }
     .bug-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
         z-index: 2147483647; align-items: center; justify-content: center; }
     .bug-modal.open { display: flex; }
@@ -95,6 +93,7 @@
                 <span class="bug-toggle-spin"></span>
             </span>
         </button>
+        <div class="bug-corner-glow" aria-hidden="true"></div>
         <div class="bug-modal" role="dialog" aria-modal="true">
             <div class="bug-card">
                 <h2 style="margin:0">Report a bug or request</h2>
