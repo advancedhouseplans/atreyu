@@ -1,22 +1,31 @@
 (function(){var e=class{constructor(e){this.size=e,this.items=[]}push(e){this.size<=0||(this.items.push(e),this.items.length>this.size&&this.items.splice(0,this.items.length-this.size))}toArray(){return this.items.slice()}};function t({ring:e,skipUrlPrefix:t}){let n=globalThis.fetch;if(globalThis.fetch=async function(r,i){let a=typeof r==`string`?r:r&&r.url||``,o=i&&i.method||r&&r.method||`GET`;if(t&&a.startsWith(t))return n(r,i);let s=performance.now();try{let t=await n(r,i);return e.push({method:o,url:a,status:t.status,duration_ms:Math.round(performance.now()-s),ts:Date.now(),debug_id:t.headers.get(`X-Debug-Id`)||null}),t}catch(t){throw e.push({method:o,url:a,status:0,duration_ms:Math.round(performance.now()-s),ts:Date.now(),debug_id:null}),t}},typeof XMLHttpRequest<`u`){let n=XMLHttpRequest.prototype.open,r=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(e,t){return this.__bug={method:e,url:t,start:0},n.apply(this,arguments)},XMLHttpRequest.prototype.send=function(){return!this.__bug||t&&this.__bug.url.startsWith(t)?r.apply(this,arguments):(this.__bug.start=performance.now(),this.addEventListener(`loadend`,()=>{e.push({method:this.__bug.method,url:this.__bug.url,status:this.status,duration_ms:Math.round(performance.now()-this.__bug.start),ts:Date.now(),debug_id:this.getResponseHeader(`X-Debug-Id`)||null})}),r.apply(this,arguments))}}}function n({ring:e}){window.addEventListener(`error`,t=>{e.push({type:`error`,message:t.message,filename:t.filename,lineno:t.lineno,colno:t.colno,stack:t.error?.stack||null,ts:Date.now()})}),window.addEventListener(`unhandledrejection`,t=>{e.push({type:`unhandledrejection`,message:String(t.reason?.message??t.reason??``),stack:t.reason?.stack||null,ts:Date.now()})}),[`error`,`warn`].forEach(t=>{let n=console[t].bind(console);console[t]=function(...r){try{e.push({type:`console.${t}`,message:r.map(e=>typeof e==`string`?e:JSON.stringify(e)).join(` `),ts:Date.now()})}catch{}return n(...r)}}),window.addEventListener(`popstate`,()=>e.push({type:`nav.popstate`,url:location.href,ts:Date.now()})),window.addEventListener(`hashchange`,()=>e.push({type:`nav.hashchange`,url:location.href,ts:Date.now()}));let t=history.pushState.bind(history);history.pushState=function(n,r,i){return e.push({type:`nav.pushState`,url:String(i||location.href),ts:Date.now()}),t(n,r,i)}}function r(e){if(!e)return null;let t=e.getAttribute(`data-config`);if(!t)return null;let[n]=t.split(`.`);if(!n)return null;try{let e=n.length%4?`=`.repeat(4-n.length%4):``,r=atob(n.replaceAll(`-`,`+`).replaceAll(`_`,`/`)+e);return{...JSON.parse(r),token:t}}catch{return null}}var i=`
     :host { all: initial; }
-    /* Edge tab: vertical sliver hugs the right edge, animates outward on hover. */
+    /* Edge tab pinned to bottom-right. Hit area = only the visible sliver.
+       On hover the whole thing pops off the edge into a circle. */
     .bug-toggle {
-        position: fixed; right: 0; bottom: 25%;
-        width: 56px; height: 64px; padding: 0;
-        border: 0; background: transparent; cursor: pointer;
-        z-index: 2147483647;
+        position: fixed; right: 0; bottom: 24px;
+        width: 4px; height: 48px;
+        padding: 0; border: 0; background: transparent; cursor: pointer;
+        z-index: 2147483647; color: #fff;
         display: flex; align-items: center; justify-content: flex-end;
+        transition: width .38s cubic-bezier(.34, 1.56, .64, 1),
+                    height .38s cubic-bezier(.34, 1.56, .64, 1);
+    }
+    .bug-toggle:hover,
+    .bug-toggle.working {
+        width: 64px; height: 60px;
     }
     .bug-toggle-shell {
         width: 4px; height: 48px;
-        background: #d33; border-radius: 4px 0 0 4px;
-        box-shadow: -2px 4px 12px rgba(0, 0, 0, .18);
-        transition: width .35s cubic-bezier(.34, 1.56, .64, 1),
-                    height .35s cubic-bezier(.34, 1.56, .64, 1),
-                    border-radius .35s cubic-bezier(.34, 1.56, .64, 1),
-                    box-shadow .35s ease-out,
-                    background .2s ease-out;
+        background: #ef4444; /* tailwind red-500 */
+        border-radius: 4px 0 0 4px;
+        margin-right: 0;
+        box-shadow: -2px 4px 10px rgba(0, 0, 0, .18);
+        transition: width .38s cubic-bezier(.34, 1.56, .64, 1),
+                    height .38s cubic-bezier(.34, 1.56, .64, 1),
+                    border-radius .38s cubic-bezier(.34, 1.56, .64, 1),
+                    margin-right .38s cubic-bezier(.34, 1.56, .64, 1),
+                    box-shadow .38s ease-out;
         position: relative;
         display: flex; align-items: center; justify-content: center;
         overflow: hidden;
@@ -26,34 +35,35 @@
         position: absolute; opacity: 0;
         transition: opacity .18s ease-out;
     }
-    .bug-toggle-icon { font: 20px/1 system-ui; }
+    .bug-toggle-icon { color: #fff; line-height: 0; }
+    .bug-toggle-icon svg { width: 18px; height: 18px; display: block; fill: currentColor; }
     .bug-toggle-spin {
         width: 14px; height: 14px;
         border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
         animation: bug-spin .8s linear infinite;
     }
-    /* Expanded state on hover OR working state — steps out from the edge into a pill. */
+    /* Expanded: pops off the edge and turns into a circle. */
     .bug-toggle:hover .bug-toggle-shell,
     .bug-toggle.working .bug-toggle-shell {
         width: 44px; height: 44px;
-        border-radius: 22px 0 0 22px;
-        background: #d33;
-        box-shadow: -12px 12px 28px rgba(0, 0, 0, .35),
+        border-radius: 50%;
+        margin-right: 8px;
+        box-shadow: -10px 12px 28px rgba(0, 0, 0, .35),
                     0 0 0 1px rgba(255, 255, 255, .06);
     }
-    .bug-toggle:hover .bug-toggle-icon { opacity: 1; transition-delay: .1s; }
-    .bug-toggle.working .bug-toggle-spin { opacity: 1; transition-delay: .1s; }
+    .bug-toggle:hover .bug-toggle-icon { opacity: 1; transition-delay: .12s; }
+    .bug-toggle.working .bug-toggle-spin { opacity: 1; transition-delay: .12s; }
     .bug-toggle.working .bug-toggle-icon { opacity: 0 !important; transition-delay: 0s; }
     .bug-toggle[disabled] { cursor: wait; }
-    /* Soft blur/gradient underneath the pill, only when expanded. */
+    /* Soft red glow behind the circle when expanded. */
     .bug-toggle::before {
         content: '';
-        position: absolute; right: -8px; bottom: -12px;
-        width: 80px; height: 80px;
-        background: radial-gradient(closest-side, rgba(211, 51, 51, .28), transparent 70%);
+        position: absolute; right: 0; bottom: -8px;
+        width: 80px; height: 76px;
+        background: radial-gradient(closest-side, rgba(239, 68, 68, .32), transparent 70%);
         filter: blur(10px);
         opacity: 0; pointer-events: none;
-        transition: opacity .35s ease-out;
+        transition: opacity .38s ease-out;
     }
     .bug-toggle:hover::before,
     .bug-toggle.working::before { opacity: 1; }
@@ -81,7 +91,7 @@
 `;function a({config:e,onSubmit:t,onCapture:n}){let r=document.createElement(`div`);r.id=`bug-widget-root`,(document.body||document.documentElement).appendChild(r);let a=r.attachShadow({mode:`open`}),s=document.createElement(`style`);s.textContent=i,a.appendChild(s),a.innerHTML+=`
         <button class="bug-toggle" title="Report a bug" aria-label="Report a bug">
             <span class="bug-toggle-shell">
-                <span class="bug-toggle-icon">🐞</span>
+                <span class="bug-toggle-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true"><path d="M256 0c53 0 96 43 96 96l0 3.6c0 15.7-12.7 28.4-28.4 28.4l-135.1 0c-15.7 0-28.4-12.7-28.4-28.4l0-3.6c0-53 43-96 96-96zM41.4 105.4c12.5-12.5 32.8-12.5 45.3 0l64 64c.7 .7 1.3 1.4 1.9 2.1c14.2-7.3 30.4-11.4 47.5-11.4l112 0c17.1 0 33.2 4.1 47.5 11.4c.6-.7 1.2-1.4 1.9-2.1l64-64c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3l-64 64c-.7 .7-1.4 1.3-2.1 1.9c6.2 12 10.1 25.3 11.1 39.5l64.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c0 24.6-5.5 47.8-15.4 68.6c2.2 1.3 4.2 2.9 6 4.8l64 64c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0l-63.1-63.1c-24.5 21.8-55.8 36.2-90.3 39.6L272 240c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 239.2c-34.5-3.4-65.8-17.8-90.3-39.6L86.6 502.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l64-64c1.9-1.9 3.9-3.4 6-4.8C101.5 367.8 96 344.6 96 320l-64 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l64.3 0c1.1-14.1 5-27.5 11.1-39.5c-.7-.6-1.4-1.2-2.1-1.9l-64-64c-12.5-12.5-12.5-32.8 0-45.3z"/></svg></span>
                 <span class="bug-toggle-spin"></span>
             </span>
         </button>
