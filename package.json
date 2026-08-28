@@ -6,7 +6,7 @@
         "build": "vp build",
         "dev": "vp dev",
         "build:widget": "vite build --config vite.widget.config.js",
-        "test:widget": "vitest run --config vite.widget.config.js"
+        "test:widget": "vitest run"
     },
     "dependencies": {
         "@laravel/passkeys": "^0.2.0",
