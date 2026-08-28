@@ -9,6 +9,7 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
@@ -22,12 +23,18 @@ class BugCompanionServiceProvider extends ServiceProvider
 
     public function boot(Router $router): void
     {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'bug-companion');
+
         $this->publishes([
             __DIR__.'/../config/bug-companion.php' => config_path('bug-companion.php'),
         ], 'bug-companion-config');
 
         $router->aliasMiddleware('bugs.callback', VerifyBugsCallback::class);
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+
+        Blade::directive('bugWidget', function () {
+            return "<?php if (config('bug-companion.enabled', true)) { echo view('bug-companion::widget')->render(); } ?>";
+        });
 
         if (! config('bug-companion.enabled', true)) {
             return;
