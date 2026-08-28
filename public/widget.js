@@ -1,30 +1,34 @@
 (function(){var e=class{constructor(e){this.size=e,this.items=[]}push(e){this.size<=0||(this.items.push(e),this.items.length>this.size&&this.items.splice(0,this.items.length-this.size))}toArray(){return this.items.slice()}};function t({ring:e,skipUrlPrefix:t}){let n=globalThis.fetch;if(globalThis.fetch=async function(r,i){let a=typeof r==`string`?r:r&&r.url||``,o=i&&i.method||r&&r.method||`GET`;if(t&&a.startsWith(t))return n(r,i);let s=performance.now();try{let t=await n(r,i);return e.push({method:o,url:a,status:t.status,duration_ms:Math.round(performance.now()-s),ts:Date.now(),debug_id:t.headers.get(`X-Debug-Id`)||null}),t}catch(t){throw e.push({method:o,url:a,status:0,duration_ms:Math.round(performance.now()-s),ts:Date.now(),debug_id:null}),t}},typeof XMLHttpRequest<`u`){let n=XMLHttpRequest.prototype.open,r=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(e,t){return this.__bug={method:e,url:t,start:0},n.apply(this,arguments)},XMLHttpRequest.prototype.send=function(){return!this.__bug||t&&this.__bug.url.startsWith(t)?r.apply(this,arguments):(this.__bug.start=performance.now(),this.addEventListener(`loadend`,()=>{e.push({method:this.__bug.method,url:this.__bug.url,status:this.status,duration_ms:Math.round(performance.now()-this.__bug.start),ts:Date.now(),debug_id:this.getResponseHeader(`X-Debug-Id`)||null})}),r.apply(this,arguments))}}}function n({ring:e}){window.addEventListener(`error`,t=>{e.push({type:`error`,message:t.message,filename:t.filename,lineno:t.lineno,colno:t.colno,stack:t.error?.stack||null,ts:Date.now()})}),window.addEventListener(`unhandledrejection`,t=>{e.push({type:`unhandledrejection`,message:String(t.reason?.message??t.reason??``),stack:t.reason?.stack||null,ts:Date.now()})}),[`error`,`warn`].forEach(t=>{let n=console[t].bind(console);console[t]=function(...r){try{e.push({type:`console.${t}`,message:r.map(e=>typeof e==`string`?e:JSON.stringify(e)).join(` `),ts:Date.now()})}catch{}return n(...r)}}),window.addEventListener(`popstate`,()=>e.push({type:`nav.popstate`,url:location.href,ts:Date.now()})),window.addEventListener(`hashchange`,()=>e.push({type:`nav.hashchange`,url:location.href,ts:Date.now()}));let t=history.pushState.bind(history);history.pushState=function(n,r,i){return e.push({type:`nav.pushState`,url:String(i||location.href),ts:Date.now()}),t(n,r,i)}}function r(e){if(!e)return null;let t=e.getAttribute(`data-config`);if(!t)return null;let[n]=t.split(`.`);if(!n)return null;try{let e=n.length%4?`=`.repeat(4-n.length%4):``,r=atob(n.replaceAll(`-`,`+`).replaceAll(`_`,`/`)+e);return{...JSON.parse(r),token:t}}catch{return null}}var i=`
     :host { all: initial; }
-    /* Edge tab pinned to bottom-right. Only horizontal motion — height is
-       locked so there's no vertical drift. */
+    /* Corner arc: an unfilled ring sits mostly outside the viewport so only
+       the top-left quarter is visible as a curved sliver. Hit box grows on
+       hover so the cursor can follow the shell as it detaches. */
     .bug-toggle {
-        position: fixed; right: 0; bottom: 24px;
-        width: 4px; height: 48px;
+        position: fixed; right: 0; bottom: 0;
+        width: 48px; height: 48px;
         padding: 0; border: 0; background: transparent; cursor: pointer;
         z-index: 2147483647; color: #fff;
-        display: flex; align-items: center; justify-content: flex-end;
-        transition: width .19s cubic-bezier(.22, 1, .36, 1);
+        overflow: visible;
+        transition: width .19s cubic-bezier(.22, 1, .36, 1),
+                    height .19s cubic-bezier(.22, 1, .36, 1);
     }
     .bug-toggle:hover,
-    .bug-toggle.working { width: 64px; }
+    .bug-toggle.working { width: 84px; height: 84px; }
     .bug-toggle-shell {
-        width: 4px; height: 48px;
-        background: #ef4444; /* tailwind red-500 */
-        border-radius: 4px 0 0 4px;
-        margin-right: 0;
-        box-shadow: -2px 4px 10px rgba(0, 0, 0, .18);
-        transition: width .19s cubic-bezier(.22, 1, .36, 1),
-                    border-radius .19s cubic-bezier(.22, 1, .36, 1),
-                    margin-right .19s cubic-bezier(.22, 1, .36, 1),
+        position: absolute; right: -32px; bottom: -32px;
+        width: 64px; height: 64px;
+        background: transparent;
+        border: 4px solid #ef4444; /* tailwind red-500 */
+        border-radius: 50%;
+        box-shadow: none;
+        transition: right .19s cubic-bezier(.22, 1, .36, 1),
+                    bottom .19s cubic-bezier(.22, 1, .36, 1),
+                    width .19s cubic-bezier(.22, 1, .36, 1),
+                    height .19s cubic-bezier(.22, 1, .36, 1),
+                    background .16s ease-out,
+                    border-width .16s ease-out,
                     box-shadow .19s ease-out;
-        position: relative;
         display: flex; align-items: center; justify-content: center;
-        overflow: hidden;
     }
     .bug-toggle-icon,
     .bug-toggle-spin {
@@ -38,12 +42,13 @@
         border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
         animation: bug-spin .8s linear infinite;
     }
-    /* Expanded: shell grows horizontally into a 48×48 circle (same height). */
+    /* Expanded: shell pulls off the corner into a filled 48×48 circle. */
     .bug-toggle:hover .bug-toggle-shell,
     .bug-toggle.working .bug-toggle-shell {
-        width: 48px;
-        border-radius: 50%;
-        margin-right: 8px;
+        right: 12px; bottom: 12px;
+        width: 48px; height: 48px;
+        background: #ef4444;
+        border-width: 0;
         box-shadow: -10px 12px 28px rgba(0, 0, 0, .35),
                     0 0 0 1px rgba(255, 255, 255, .06);
     }

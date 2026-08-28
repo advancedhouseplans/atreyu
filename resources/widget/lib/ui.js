@@ -1,30 +1,34 @@
 const STYLE = `
     :host { all: initial; }
-    /* Edge tab pinned to bottom-right. Only horizontal motion — height is
-       locked so there's no vertical drift. */
+    /* Corner arc: an unfilled ring sits mostly outside the viewport so only
+       the top-left quarter is visible as a curved sliver. Hit box grows on
+       hover so the cursor can follow the shell as it detaches. */
     .bug-toggle {
-        position: fixed; right: 0; bottom: 24px;
-        width: 4px; height: 48px;
+        position: fixed; right: 0; bottom: 0;
+        width: 48px; height: 48px;
         padding: 0; border: 0; background: transparent; cursor: pointer;
         z-index: 2147483647; color: #fff;
-        display: flex; align-items: center; justify-content: flex-end;
-        transition: width .19s cubic-bezier(.22, 1, .36, 1);
+        overflow: visible;
+        transition: width .19s cubic-bezier(.22, 1, .36, 1),
+                    height .19s cubic-bezier(.22, 1, .36, 1);
     }
     .bug-toggle:hover,
-    .bug-toggle.working { width: 64px; }
+    .bug-toggle.working { width: 84px; height: 84px; }
     .bug-toggle-shell {
-        width: 4px; height: 48px;
-        background: #ef4444; /* tailwind red-500 */
-        border-radius: 4px 0 0 4px;
-        margin-right: 0;
-        box-shadow: -2px 4px 10px rgba(0, 0, 0, .18);
-        transition: width .19s cubic-bezier(.22, 1, .36, 1),
-                    border-radius .19s cubic-bezier(.22, 1, .36, 1),
-                    margin-right .19s cubic-bezier(.22, 1, .36, 1),
+        position: absolute; right: -32px; bottom: -32px;
+        width: 64px; height: 64px;
+        background: transparent;
+        border: 4px solid #ef4444; /* tailwind red-500 */
+        border-radius: 50%;
+        box-shadow: none;
+        transition: right .19s cubic-bezier(.22, 1, .36, 1),
+                    bottom .19s cubic-bezier(.22, 1, .36, 1),
+                    width .19s cubic-bezier(.22, 1, .36, 1),
+                    height .19s cubic-bezier(.22, 1, .36, 1),
+                    background .16s ease-out,
+                    border-width .16s ease-out,
                     box-shadow .19s ease-out;
-        position: relative;
         display: flex; align-items: center; justify-content: center;
-        overflow: hidden;
     }
     .bug-toggle-icon,
     .bug-toggle-spin {
@@ -38,12 +42,13 @@ const STYLE = `
         border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
         animation: bug-spin .8s linear infinite;
     }
-    /* Expanded: shell grows horizontally into a 48×48 circle (same height). */
+    /* Expanded: shell pulls off the corner into a filled 48×48 circle. */
     .bug-toggle:hover .bug-toggle-shell,
     .bug-toggle.working .bug-toggle-shell {
-        width: 48px;
-        border-radius: 50%;
-        margin-right: 8px;
+        right: 12px; bottom: 12px;
+        width: 48px; height: 48px;
+        background: #ef4444;
+        border-width: 0;
         box-shadow: -10px 12px 28px rgba(0, 0, 0, .35),
                     0 0 0 1px rgba(255, 255, 255, .06);
     }
