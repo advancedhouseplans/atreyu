@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Widget preview</title>
+    <meta name="app-version" content="0.1.0">
+</head>
+<body>
+    <h1>Preview host page</h1>
+    <p>Some content.</p>
+    <script>
+        // Fake config token for the preview (payload only, signature ignored).
+        const payload = { endpoint: 'https://bugs.test', source_slug: 'ahp', env: 'local',
+            user_id: 1, user_email: 'preview@ahp.test', user_name: 'Preview User', exp: 9999999999 };
+        const b64 = btoa(JSON.stringify(payload)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+        const s = document.createElement('script');
+        s.src = '/widget.js';
+        s.defer = true;
+        s.setAttribute('data-config', `${b64}.sig`);
+        document.head.appendChild(s);
+    </script>
+</body>
+</html>
