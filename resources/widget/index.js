@@ -20,14 +20,23 @@ import { submit } from './lib/submit.js';
     installEventCapture({ ring: eventRing });
 
     const boot = () => {
-        mountUi({
+        let currentSnapshot = null;
+
+        const ui = mountUi({
             config,
+            onOpen: async () => {
+                currentSnapshot = null;
+                try {
+                    const blob = await snapshot();
+                    currentSnapshot = blob;
+                    ui.setPreview(URL.createObjectURL(blob));
+                } catch (_) {
+                    ui.setPreview(null);
+                }
+            },
             onSubmit: async (formData, { close, disable, enable }) => {
                 disable();
                 try {
-                    let snap = null;
-                    try { snap = await snapshot(); } catch (_) { /* ignore */ }
-
                     const network = netRing.toArray();
                     const debugIds = Array.from(new Set(network.map(x => x.debug_id).filter(Boolean)));
 
@@ -49,7 +58,7 @@ import { submit } from './lib/submit.js';
 
                     const result = await submit({
                         endpoint: config.endpoint, token: config.token,
-                        formData, metadata, snapshotBlob: snap,
+                        formData, metadata, snapshotBlob: currentSnapshot,
                     });
 
                     if (result.ok) {

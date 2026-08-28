@@ -7,16 +7,26 @@ const STYLE = `
         z-index: 2147483647; align-items: center; justify-content: center; }
     .bug-modal.open { display: flex; }
     .bug-card { background: #fff; padding: 20px; border-radius: 8px; width: min(520px, 92vw);
-        font: 14px/1.4 system-ui; color: #111; }
+        max-height: 90vh; overflow-y: auto; font: 14px/1.4 system-ui; color: #111; }
     .bug-card label { display: block; margin-top: 10px; font-weight: 600; }
     .bug-card input, .bug-card textarea, .bug-card select { width: 100%; padding: 6px; box-sizing: border-box; }
-    .bug-actions { margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end; }
+    .bug-actions { margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
     .bug-actions button { padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
     .bug-actions .primary { background: #111; color: #fff; border-color: #111; }
+    .bug-actions .primary[disabled] { opacity: .6; cursor: wait; }
     .bug-note { color: #666; font-size: 12px; margin-top: 4px; }
+    .bug-preview { margin-top: 10px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden;
+        background: #fafafa; min-height: 80px; display: flex; align-items: center; justify-content: center;
+        color: #999; font-size: 12px; }
+    .bug-preview img { display: block; width: 100%; height: auto; }
+    .bug-status { flex: 1; text-align: left; color: #666; font-size: 12px; }
+    .bug-spinner { width: 12px; height: 12px; border: 2px solid #ccc; border-top-color: #111;
+        border-radius: 50%; animation: bug-spin .8s linear infinite; display: inline-block;
+        vertical-align: middle; margin-right: 6px; }
+    @keyframes bug-spin { to { transform: rotate(360deg); } }
 `;
 
-export function mountUi({ config, onSubmit }) {
+export function mountUi({ config, onSubmit, onOpen }) {
     const host = document.createElement('div');
     host.id = 'bug-widget-root';
     (document.body || document.documentElement).appendChild(host);
@@ -50,7 +60,11 @@ export function mountUi({ config, onSubmit }) {
                 <label>Title <input name="title" required></label>
                 <label>Description <textarea name="description" rows="4"></textarea></label>
                 <label>Additional files <input type="file" name="attachments" multiple></label>
+                <label>Screenshot preview
+                    <div class="bug-preview">Capturing…</div>
+                </label>
                 <div class="bug-actions">
+                    <span class="bug-status"></span>
                     <button class="cancel" type="button">Cancel</button>
                     <button class="primary submit" type="button">Send report</button>
                 </div>
@@ -62,9 +76,20 @@ export function mountUi({ config, onSubmit }) {
     const toggle = root.querySelector('.bug-toggle');
     const cancel = root.querySelector('.cancel');
     const submit = root.querySelector('.submit');
+    const preview = root.querySelector('.bug-preview');
+    const status = root.querySelector('.bug-status');
 
-    function open() { modal.classList.add('open'); }
+    function open() {
+        modal.classList.add('open');
+        if (onOpen) { try { onOpen(); } catch (_) { /* ignore */ } }
+    }
     function close() { modal.classList.remove('open'); }
+    function setPreview(dataUrl) {
+        preview.innerHTML = dataUrl ? `<img alt="snapshot" src="${dataUrl}">` : 'Snapshot unavailable';
+    }
+    function setStatus(text) {
+        status.innerHTML = text ? `<span class="bug-spinner"></span>${escapeHtml(text)}` : '';
+    }
 
     toggle.addEventListener('click', open);
     cancel.addEventListener('click', close);
@@ -83,12 +108,12 @@ export function mountUi({ config, onSubmit }) {
         for (const f of files) { fd.append('attachments[]', f); }
         onSubmit(fd, {
             close,
-            disable: () => { submit.disabled = true; },
-            enable: () => { submit.disabled = false; },
+            disable: () => { submit.disabled = true; submit.textContent = 'Sending…'; setStatus('Sending report…'); },
+            enable: () => { submit.disabled = false; submit.textContent = 'Send report'; setStatus(''); },
         });
     });
 
-    return { open, close, root: host };
+    return { open, close, root: host, setPreview };
 }
 
 export function escapeHtml(s) {
