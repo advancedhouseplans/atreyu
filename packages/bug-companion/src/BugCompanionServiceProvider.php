@@ -3,10 +3,12 @@
 namespace BugCompanion;
 
 use BugCompanion\Http\Middleware\CaptureContext;
+use BugCompanion\Http\Middleware\VerifyBugsCallback;
 use BugCompanion\Support\ContextBuffer;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
@@ -18,11 +20,14 @@ class BugCompanionServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/bug-companion.php', 'bug-companion');
     }
 
-    public function boot(): void
+    public function boot(Router $router): void
     {
         $this->publishes([
             __DIR__.'/../config/bug-companion.php' => config_path('bug-companion.php'),
         ], 'bug-companion-config');
+
+        $router->aliasMiddleware('bugs.callback', VerifyBugsCallback::class);
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         if (! config('bug-companion.enabled', true)) {
             return;
