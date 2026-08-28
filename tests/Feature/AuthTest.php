@@ -3,10 +3,8 @@
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 
-it('does not expose a registration route', function () {
-    $this->post('/register', [
-        'name' => 'X', 'email' => 'x@x.com', 'password' => 'password', 'password_confirmation' => 'password',
-    ])->assertStatus(404);
+it('exposes a registration route', function () {
+    $this->get('/register')->assertOk();
 });
 
 it('seeds jamie and keith', function () {
