@@ -89,6 +89,9 @@ export function mountUi({ config, onSubmit, onCapture }) {
         const previousToggleHtml = toggle.innerHTML;
         toggle.innerHTML = '<span class="bug-toggle-spin"></span>';
         preview.innerHTML = 'Capturing…';
+        // Yield to browser so the spinner + disabled state actually paint
+        // before html2canvas locks the main thread.
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         try {
             if (onCapture) {
                 const dataUrl = await onCapture();
