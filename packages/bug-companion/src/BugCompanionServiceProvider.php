@@ -2,7 +2,14 @@
 
 namespace BugCompanion;
 
+use BugCompanion\Http\Middleware\CaptureContext;
+use BugCompanion\Support\ContextBuffer;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class BugCompanionServiceProvider extends ServiceProvider
 {
@@ -16,5 +23,37 @@ class BugCompanionServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/bug-companion.php' => config_path('bug-companion.php'),
         ], 'bug-companion-config');
+
+        if (! config('bug-companion.enabled', true)) {
+            return;
+        }
+
+        $this->app->afterResolving(HttpKernel::class, function ($kernel): void {
+            $kernel->appendMiddlewareToGroup('web', CaptureContext::class);
+        });
+
+        Model::retrieved(function ($model): void {
+            if ($this->app->bound(ContextBuffer::class)) {
+                $this->app->make(ContextBuffer::class)
+                    ->addModel($model::class, $model->getKey());
+            }
+        });
+
+        DB::listen(function ($query): void {
+            if ($this->app->bound(ContextBuffer::class)) {
+                $this->app->make(ContextBuffer::class)
+                    ->addQuery($query->sql, $query->bindings ?? [], $query->time ?? 0.0, $query->connectionName);
+            }
+        });
+
+        /** @var ExceptionHandler $handler */
+        $handler = $this->app->make(ExceptionHandler::class);
+        if (method_exists($handler, 'reportable')) {
+            $handler->reportable(function (Throwable $e): void {
+                if ($this->app->bound(ContextBuffer::class)) {
+                    $this->app->make(ContextBuffer::class)->addException($e);
+                }
+            });
+        }
     }
 }
