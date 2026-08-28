@@ -2,7 +2,11 @@ const STYLE = `
     :host { all: initial; }
     .bug-toggle { position: fixed; bottom: 16px; right: 16px; width: 40px; height: 40px;
         border-radius: 20px; border: 0; background: #d33; color: #fff; font: 600 14px/40px system-ui;
-        cursor: pointer; z-index: 2147483647; }
+        cursor: pointer; z-index: 2147483647; text-align: center; }
+    .bug-toggle[disabled] { cursor: wait; background: #a22; }
+    .bug-toggle .bug-toggle-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff;
+        border-top-color: transparent; border-radius: 50%; animation: bug-spin .8s linear infinite;
+        vertical-align: middle; }
     .bug-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
         z-index: 2147483647; align-items: center; justify-content: center; }
     .bug-modal.open { display: flex; }
@@ -26,7 +30,7 @@ const STYLE = `
     @keyframes bug-spin { to { transform: rotate(360deg); } }
 `;
 
-export function mountUi({ config, onSubmit, onOpen }) {
+export function mountUi({ config, onSubmit, onCapture }) {
     const host = document.createElement('div');
     host.id = 'bug-widget-root';
     (document.body || document.documentElement).appendChild(host);
@@ -79,9 +83,24 @@ export function mountUi({ config, onSubmit, onOpen }) {
     const preview = root.querySelector('.bug-preview');
     const status = root.querySelector('.bug-status');
 
-    function open() {
+    async function open() {
+        if (toggle.disabled) { return; }
+        toggle.disabled = true;
+        const previousToggleHtml = toggle.innerHTML;
+        toggle.innerHTML = '<span class="bug-toggle-spin"></span>';
+        preview.innerHTML = 'Capturing…';
+        try {
+            if (onCapture) {
+                const dataUrl = await onCapture();
+                setPreview(dataUrl);
+            }
+        } catch (_) {
+            setPreview(null);
+        } finally {
+            toggle.disabled = false;
+            toggle.innerHTML = previousToggleHtml;
+        }
         modal.classList.add('open');
-        if (onOpen) { try { onOpen(); } catch (_) { /* ignore */ } }
     }
     function close() { modal.classList.remove('open'); }
     function setPreview(dataUrl) {
@@ -113,7 +132,7 @@ export function mountUi({ config, onSubmit, onOpen }) {
         });
     });
 
-    return { open, close, root: host, setPreview };
+    return { open, close, root: host };
 }
 
 export function escapeHtml(s) {

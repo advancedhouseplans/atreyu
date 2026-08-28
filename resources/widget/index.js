@@ -22,17 +22,13 @@ import { submit } from './lib/submit.js';
     const boot = () => {
         let currentSnapshot = null;
 
-        const ui = mountUi({
+        mountUi({
             config,
-            onOpen: async () => {
+            onCapture: async () => {
                 currentSnapshot = null;
-                try {
-                    const blob = await snapshot();
-                    currentSnapshot = blob;
-                    ui.setPreview(URL.createObjectURL(blob));
-                } catch (_) {
-                    ui.setPreview(null);
-                }
+                const blob = await snapshot();
+                currentSnapshot = blob;
+                return URL.createObjectURL(blob);
             },
             onSubmit: async (formData, { close, disable, enable }) => {
                 disable();
