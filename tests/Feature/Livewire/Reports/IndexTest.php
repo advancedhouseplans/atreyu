@@ -31,3 +31,14 @@ it('searches by title', function () {
 it('requires auth via the route', function () {
     $this->get('/reports')->assertRedirect('/login');
 });
+
+it('falls back to safe sort when given a bogus URL param', function () {
+    $u = User::factory()->create();
+    Report::factory()->count(3)->create();
+
+    // Bogus sortBy shouldn't 500 the page.
+    Livewire::actingAs($u)->test(Index::class)
+        ->set('sortBy', 'DROP TABLE users')
+        ->set('sortDir', 'sideways')
+        ->assertOk();
+});

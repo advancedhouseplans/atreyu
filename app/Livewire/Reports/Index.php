@@ -68,8 +68,22 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingSortBy(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSortDir(): void
+    {
+        $this->resetPage();
+    }
+
     public function render(): View
     {
+        $allowedSorts = ['created_at', 'severity', 'status', 'title'];
+        $sortBy = in_array($this->sortBy, $allowedSorts, true) ? $this->sortBy : 'created_at';
+        $sortDir = $this->sortDir === 'asc' ? 'asc' : 'desc';
+
         $query = Report::query()
             ->when($this->q, fn ($x) => $x->where(fn ($w) => $w
                 ->where('title', 'like', "%{$this->q}%")
@@ -83,7 +97,7 @@ class Index extends Component
                 fn ($x) => $x->where('assignee_id', auth()->id()),
                 fn ($x) => $x->when($this->assignee, fn ($y) => $y->where('assignee_id', $this->assignee))
             )
-            ->orderBy($this->sortBy, $this->sortDir);
+            ->orderBy($sortBy, $sortDir);
 
         return view('livewire.reports.index', ['reports' => $query->paginate(25)]);
     }
