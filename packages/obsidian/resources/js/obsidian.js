@@ -1,4 +1,4 @@
-import { applyTheme, resolveTheme } from './lib/theme.js';
+import { applyTheme, mergeTheme, resolveTheme } from './lib/theme.js';
 
 const STORAGE_KEY = 'ob-theme';
 
@@ -19,14 +19,19 @@ export default function obsidian(Alpine) {
         mode: 'light',
 
         init() {
-            // The inline theme-script already set the attributes; adopt them instead of re-deriving the server value.
+            // The inline theme-script normally set the attributes already; fall back to storage when it is absent.
             const { appearance, accent } = document.documentElement.dataset;
-            this.apply({ appearance, accent }, false);
+            this.resolve({ server: { appearance, accent }, stored: readStored() });
             media.addEventListener('change', () => this.apply(this, false));
         },
 
-        apply({ appearance, accent }, persist = true) {
-            Object.assign(this, resolveTheme({ server: { appearance, accent }, prefersDark: media.matches }));
+        resolve({ server, stored }) {
+            Object.assign(this, resolveTheme({ server, stored, prefersDark: media.matches }));
+            applyTheme(document.documentElement, this);
+        },
+
+        apply(partial, persist = true) {
+            this.resolve({ server: mergeTheme(this, partial) });
 
             if (persist) {
                 try {
@@ -35,8 +40,6 @@ export default function obsidian(Alpine) {
                     // Storage can be blocked; the theme still applies for this page.
                 }
             }
-
-            applyTheme(document.documentElement, this);
         },
     });
 

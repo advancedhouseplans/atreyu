@@ -6,11 +6,8 @@
         const A = ['system', 'light', 'dark'], C = ['iris', 'blue', 'teal', 'green', 'amber', 'rose'];
         const server = { appearance: @js($appearance), accent: @js($accent) };
         let stored = {};
-        try {
-            stored = JSON.parse(localStorage.getItem('ob-theme')) || {};
-            localStorage.removeItem('mary-theme');
-            localStorage.removeItem('atreyu-theme');
-        } catch (e) {}
+        try { localStorage.removeItem('mary-theme'); localStorage.removeItem('atreyu-theme'); } catch (e) {}
+        try { stored = JSON.parse(localStorage.getItem('ob-theme')) || {}; } catch (e) {}
         const pick = (key, allowed, fallback) => [server[key], stored[key]].find((v) => allowed.includes(v)) || fallback;
         const appearance = pick('appearance', A, 'system'), accent = pick('accent', C, 'iris');
         const dark = appearance === 'dark' || (appearance === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);

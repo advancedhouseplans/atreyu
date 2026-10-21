@@ -16,6 +16,14 @@ export function resolveTheme({ server = {}, stored = {}, prefersDark = false }) 
     return { appearance, accent, mode };
 }
 
+/** Overlay a partial {appearance?, accent?} on the current choice so omitted keys are kept. */
+export function mergeTheme(current, partial = {}) {
+    return {
+        appearance: partial?.appearance ?? current.appearance,
+        accent: partial?.accent ?? current.accent,
+    };
+}
+
 export function applyTheme(root, { appearance, accent, mode }) {
     root.dataset.appearance = appearance;
     root.dataset.mode = mode;

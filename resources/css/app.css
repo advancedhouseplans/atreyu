@@ -2,6 +2,7 @@
 @import '../../vendor/ahp/obsidian/resources/css/obsidian.css';
 @plugin 'daisyui' {
     themes: light --default, cupcake, bumblebee, emerald, corporate, retro, nord, winter, dark, black, synthwave, halloween, forest, luxury, night, business;
+    exclude: glass;
 }
 
 @source '../views';
