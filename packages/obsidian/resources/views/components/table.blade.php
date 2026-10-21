@@ -5,7 +5,7 @@
     <div class="overflow-clip">
         <table class="w-full table-fixed text-sm max-sm:block">
             @isset($head)
-                <thead class="glass sticky top-0 z-[1] max-sm:hidden"><tr>{{ $head }}</tr></thead>
+                <thead class="glass shadow-none! sticky top-0 z-[1] max-sm:hidden"><tr>{{ $head }}</tr></thead>
             @endisset
             <tbody class="max-sm:block">{{ $slot }}</tbody>
         </table>

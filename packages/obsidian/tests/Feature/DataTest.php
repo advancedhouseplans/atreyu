@@ -9,9 +9,9 @@ it('clips the table without creating a scroll container so the head sticks to th
         ->not->toContain('overflow-x-auto');
 });
 
-it('renders a table with a sticky glass head', function () {
+it('renders a table with a sticky, shadowless glass head', function () {
     $this->blade('<x-ob::table><x-ob::table.row><x-ob::table.cell>A</x-ob::table.cell></x-ob::table.row><x-slot:head><x-ob::table.head>Name</x-ob::table.head></x-slot:head></x-ob::table>')
-        ->assertSee('<thead class="glass sticky top-0', false)
+        ->assertSee('<thead class="glass shadow-none! sticky top-0', false)
         ->assertSee('scope="col"', false)
         ->assertSee('Name');
 });
