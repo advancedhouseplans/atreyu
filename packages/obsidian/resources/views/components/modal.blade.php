@@ -6,8 +6,9 @@
     $id = 'ob-modal-'.Str::lower(Str::random(8));
     $accessibleName = $label ?? $attributes->get('aria-label');
     $widthClass = ['sm' => 'sm:max-w-sm', 'md' => 'sm:max-w-lg', 'lg' => 'sm:max-w-2xl'][$size];
-    $modelProperty = $attributes->wire('model')->value();
-    $openState = is_string($modelProperty) && $modelProperty !== '' ? "\$wire.\$entangle('".e(addslashes($modelProperty))."')" : 'false';
+    $model = $attributes->wire('model');
+    $modelProperty = $model->value();
+    $openState = is_string($modelProperty) && $modelProperty !== '' ? "\$wire.\$entangle('".e(addslashes($modelProperty))."'".($model->hasModifier('live') ? ', true' : '').')' : 'false';
 @endphp
 
 <div

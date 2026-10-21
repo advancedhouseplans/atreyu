@@ -124,3 +124,13 @@ test('closing the two-factor setup modal by any route clears the secret', functi
         ->assertSet('qrCodeSvg', '')
         ->assertSet('manualSetupKey', '');
 });
+
+test('settings modals entangle their open state live so a client close reaches the server', function () {
+    $this->actingAs(User::factory()->create())->withSession(['auth.password_confirmed_at' => time()]);
+
+    Livewire::test('pages::settings.two-factor-setup-modal', ['requiresConfirmation' => true])
+        ->assertSeeHtml("\$entangle('showModal', true)");
+
+    Livewire::test('pages::settings.delete-user-modal')
+        ->assertSeeHtml("\$entangle('showModal', true)");
+});

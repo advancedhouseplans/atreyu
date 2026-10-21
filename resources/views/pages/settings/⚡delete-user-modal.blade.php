@@ -29,7 +29,7 @@ new class extends Component {
 }; ?>
 
 <div>
-    <x-ob::modal name="delete-account" wire:model="showModal" :title="__('Are you sure you want to delete your account?')" :description="__('Once your account is deleted, all of its resources and data will be permanently deleted. Enter your password to confirm.')">
+    <x-ob::modal name="delete-account" wire:model.live="showModal" :title="__('Are you sure you want to delete your account?')" :description="__('Once your account is deleted, all of its resources and data will be permanently deleted. Enter your password to confirm.')">
         <form id="delete-account-form" wire:submit="deleteUser">
             <x-ob::password :label="__('Password')" wire:model="password" />
         </form>

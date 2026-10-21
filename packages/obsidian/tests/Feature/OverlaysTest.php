@@ -20,6 +20,13 @@ it('entangles the modal open state with the wire:model property', function () {
         ->assertDontSee('wire:model', false);
 });
 
+it('entangles live only when wire:model.live is used, on modal and sheet', function () {
+    $this->blade('<x-ob::modal wire:model.live="showCreate">Body</x-ob::modal>')->assertSee("\$wire.\$entangle('showCreate', true)", false);
+    $this->blade('<x-ob::modal wire:model="showCreate">Body</x-ob::modal>')->assertDontSee("'showCreate', true", false);
+    $this->blade('<x-ob::sheet wire:model.live="showMenu">Body</x-ob::sheet>')->assertSee("\$wire.\$entangle('showMenu', true)", false);
+    $this->blade('<x-ob::sheet wire:model="showMenu">Body</x-ob::sheet>')->assertDontSee("'showMenu', true", false);
+});
+
 it('renders a bottom sheet with a drag handle', function () {
     $this->blade('<x-ob::sheet name="filters" title="Filters">Body</x-ob::sheet>')
         ->assertSee('data-ob-layer="sheet"', false)

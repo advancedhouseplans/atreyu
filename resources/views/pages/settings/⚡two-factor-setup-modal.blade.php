@@ -32,6 +32,8 @@ new class extends Component {
     public function startTwoFactorSetup(): void
     {
         app(EnableTwoFactorAuthentication::class)(auth()->user());
+        $this->reset('code', 'showVerificationStep');
+        $this->resetErrorBag();
         $this->loadSetupData();
         $this->showModal = true;
     }
@@ -96,7 +98,7 @@ new class extends Component {
 
 <div>
     <x-ob::modal
-        wire:model="showModal"
+        wire:model.live="showModal"
         :title="$showVerificationStep ? __('Verify authentication code') : __('Enable two-factor authentication')"
         :description="$showVerificationStep ? __('Enter the 6-digit code from your authenticator app.') : __('Scan the QR code or enter the setup key in your authenticator app.')"
     >

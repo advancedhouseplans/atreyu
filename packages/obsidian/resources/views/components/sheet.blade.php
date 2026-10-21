@@ -6,8 +6,9 @@
     $id = 'ob-sheet-'.Str::lower(Str::random(8));
     $isBottom = $side === 'bottom';
     $accessibleName = $label ?? $attributes->get('aria-label');
-    $modelProperty = $attributes->wire('model')->value();
-    $openState = is_string($modelProperty) && $modelProperty !== '' ? "\$wire.\$entangle('".e(addslashes($modelProperty))."')" : 'false';
+    $model = $attributes->wire('model');
+    $modelProperty = $model->value();
+    $openState = is_string($modelProperty) && $modelProperty !== '' ? "\$wire.\$entangle('".e(addslashes($modelProperty))."'".($model->hasModifier('live') ? ', true' : '').')' : 'false';
 
     $panelClasses = $isBottom
         ? 'inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[20px]'
