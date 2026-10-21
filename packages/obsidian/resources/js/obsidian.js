@@ -1,5 +1,6 @@
 import obDock from './data/dock.js';
 import obDropdown from './data/dropdown.js';
+import obInlineEdit from './data/inline-edit.js';
 import obModal from './data/modal.js';
 import obSheet from './data/sheet.js';
 import obToasts from './data/toasts.js';
@@ -65,6 +66,7 @@ export default function obsidian(Alpine) {
     Alpine.data('obTooltip', obTooltip);
     Alpine.data('obDock', obDock);
     Alpine.data('obDropdown', obDropdown);
+    Alpine.data('obInlineEdit', obInlineEdit);
     Alpine.data('obModal', obModal);
     Alpine.data('obSheet', obSheet);
     Alpine.data('obToasts', obToasts);
