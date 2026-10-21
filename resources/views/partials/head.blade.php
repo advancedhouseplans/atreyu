@@ -1,28 +1,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<script>
-    (() => {
-        const allowedThemes = @js(\App\Enums\Theme::values());
-        const savedTheme = @js(auth()->user()?->theme?->value);
-        const browserTheme = localStorage.getItem('atreyu-theme');
-        const legacyTheme = localStorage.getItem('mary-theme')?.replaceAll('"', '');
-        const fallbackTheme = allowedThemes.includes(browserTheme)
-            ? browserTheme
-            : (allowedThemes.includes(legacyTheme) ? legacyTheme : 'light');
-        const theme = savedTheme && allowedThemes.includes(savedTheme) ? savedTheme : fallbackTheme;
-
-        const applyTheme = (nextTheme) => {
-            if (!allowedThemes.includes(nextTheme)) return;
-
-            document.documentElement.dataset.theme = nextTheme;
-            localStorage.setItem('atreyu-theme', nextTheme);
-        };
-
-        applyTheme(theme);
-        window.addEventListener('atreyu-theme-changed', (event) => applyTheme(event.detail.theme));
-    })();
-</script>
+<x-ob::theme-script :appearance="auth()->user()?->appearance?->value" :accent="auth()->user()?->accent?->value" />
 
 <title>
     {{ filled($title ?? null) ? $title.' - '.config('app.name', 'Laravel') : config('app.name', 'Laravel') }}

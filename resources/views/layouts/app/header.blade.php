@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ auth()->user()?->theme?->value ?? 'light' }}">
+@use('App\Enums\Appearance')
+@php($user = auth()->user())
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-appearance="{{ $user?->appearance->value ?? 'system' }}" data-mode="{{ ($user?->appearance ?? Appearance::System) === Appearance::Light ? 'light' : 'dark' }}" data-accent="{{ $user?->accent->value ?? 'iris' }}">
     <head>@include('partials.head')</head>
     <body class="min-h-screen bg-base-200 text-base-content antialiased">
         <header class="navbar border-b border-base-content/5 bg-base-100/70 px-4 shadow-[0_8px_30px_-22px_rgba(0,0,0,0.45)] backdrop-blur-2xl lg:px-8">

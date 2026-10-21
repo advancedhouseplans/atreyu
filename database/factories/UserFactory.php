@@ -2,7 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Enums\Theme;
+use App\Enums\Accent;
+use App\Enums\Appearance;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -30,7 +31,8 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'theme' => Theme::Light,
+            'appearance' => Appearance::System,
+            'accent' => Accent::Iris,
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,

@@ -2,11 +2,16 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\Appearance;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin User */
+/**
+ * `theme` ('light' or 'dark') is kept for the macOS client.
+ *
+ * @mixin User
+ */
 class UserResource extends JsonResource
 {
     /**
@@ -20,7 +25,9 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'theme' => $this->theme->value,
+            'appearance' => $this->appearance->value,
+            'accent' => $this->accent->value,
+            'theme' => $this->appearance === Appearance::Dark ? 'dark' : 'light',
         ];
     }
 }
