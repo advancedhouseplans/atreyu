@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "ahp/obsidian": "@dev",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",
@@ -21,7 +22,8 @@
         "whichbrowser/parser": "^2.1"
     },
     "repositories": [
-        { "type": "path", "url": "packages/bug-companion", "options": { "symlink": true } }
+        { "type": "path", "url": "packages/bug-companion", "options": { "symlink": true } },
+        { "type": "path", "url": "packages/obsidian", "options": { "symlink": true } }
     ],
     "require-dev": {
         "ahp/bug-companion": "@dev",

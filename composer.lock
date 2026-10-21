@@ -4,8 +4,54 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "01bb72868708f73b8ac49ee0aa319e90",
+    "content-hash": "3b3d999f71829823c9a32c0f7b4994a3",
     "packages": [
+        {
+            "name": "ahp/obsidian",
+            "version": "dev-feature/obsidian-design-system",
+            "dist": {
+                "type": "path",
+                "url": "packages/obsidian",
+                "reference": "fc796ef51326f697ef12a60043db9c35860127a5"
+            },
+            "require": {
+                "blade-ui-kit/blade-heroicons": "^2.7",
+                "illuminate/support": "^13.0",
+                "illuminate/view": "^13.0",
+                "livewire/livewire": "^4.0",
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^11.0",
+                "pestphp/pest": "^5.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Obsidian\\ObsidianServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Obsidian\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Obsidian\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Obsidian design system: Blade and Alpine component library",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
         {
             "name": "bacon/bacon-qr-code",
             "version": "v3.1.1",
@@ -8449,15 +8495,17 @@
     "packages-dev": [
         {
             "name": "ahp/bug-companion",
-            "version": "dev-main",
+            "version": "dev-feature/obsidian-design-system",
             "dist": {
                 "type": "path",
                 "url": "packages/bug-companion",
-                "reference": "57a402ab125e6fc2ae39aa78d3b6e37a362192e8"
+                "reference": "83d828c78c40a6e5e8c0856702c8b6c24a97a7f3"
             },
             "require": {
                 "illuminate/cache": "^11.0 || ^12.0 || ^13.0",
+                "illuminate/database": "^11.0 || ^12.0 || ^13.0",
                 "illuminate/http": "^11.0 || ^12.0 || ^13.0",
+                "illuminate/log": "^11.0 || ^12.0 || ^13.0",
                 "illuminate/routing": "^11.0 || ^12.0 || ^13.0",
                 "illuminate/support": "^11.0 || ^12.0 || ^13.0",
                 "php": "^8.3"
@@ -8484,7 +8532,10 @@
                     "BugCompanion\\Tests\\": "tests/"
                 }
             },
-            "description": "Bug/feature-report companion for Laravel source apps",
+            "license": [
+                "proprietary"
+            ],
+            "description": "Laravel telemetry and report companion for Atreyu",
             "transport-options": {
                 "symlink": true,
                 "relative": true
@@ -12387,7 +12438,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "ahp/bug-companion": 20
+        "ahp/bug-companion": 20,
+        "ahp/obsidian": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
