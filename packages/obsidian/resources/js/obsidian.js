@@ -1,4 +1,9 @@
+import obDropdown from './data/dropdown.js';
+import obModal from './data/modal.js';
+import obSheet from './data/sheet.js';
+import obToasts from './data/toasts.js';
 import obTooltip from './data/tooltip.js';
+import { createLayerStack } from './lib/layers.js';
 import { applyTheme, mergeTheme, resolveTheme } from './lib/theme.js';
 
 const STORAGE_KEY = 'ob-theme';
@@ -44,7 +49,23 @@ export default function obsidian(Alpine) {
         },
     });
 
+    const layers = createLayerStack();
+
+    Alpine.store('obLayers', layers);
+
+    // The one Esc handler: overlays register with the layer stack instead of binding their own.
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !event.isComposing && layers.top() !== null) {
+            event.preventDefault();
+            layers.escape();
+        }
+    });
+
     Alpine.data('obTooltip', obTooltip);
+    Alpine.data('obDropdown', obDropdown);
+    Alpine.data('obModal', obModal);
+    Alpine.data('obSheet', obSheet);
+    Alpine.data('obToasts', obToasts);
 
     window.addEventListener('ob-theme-apply', (event) => Alpine.store('obTheme').apply(event.detail));
 }
