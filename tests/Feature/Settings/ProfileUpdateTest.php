@@ -73,3 +73,11 @@ test('correct password must be provided to delete account', function () {
 
     expect($user->fresh())->not->toBeNull();
 });
+
+test('settings page offers a logout form at every breakpoint', function () {
+    $response = $this->actingAs(User::factory()->create())->get(route('profile.edit'))->assertOk();
+
+    expect($response->getContent())
+        ->toMatch('#<form[^>]+action="'.preg_quote(route('logout'), '#').'"[^>]*>\s*<input type="hidden" name="_token"#')
+        ->toContain('data-test="settings-logout-button"');
+});

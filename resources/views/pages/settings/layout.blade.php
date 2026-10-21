@@ -5,6 +5,10 @@
             <x-menu-item title="{{ __('Security') }}" icon="o-shield-check" :link="route('security.edit')" exact />
             <x-menu-item title="{{ __('Appearance') }}" icon="o-swatch" :link="route('appearance.edit')" exact />
         </x-menu>
+        <form method="POST" action="{{ route('logout') }}" class="mt-4">
+            @csrf
+            <x-ob::button type="submit" variant="ghost" icon="arrow-right-start-on-rectangle" data-test="settings-logout-button">{{ __('Log out') }}</x-ob::button>
+        </form>
     </nav>
     <div class="min-w-0">
         <h2 class="text-lg font-semibold tracking-[-0.015em]">{{ $heading ?? '' }}</h2>
