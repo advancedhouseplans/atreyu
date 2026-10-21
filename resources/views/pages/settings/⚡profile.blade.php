@@ -79,25 +79,25 @@ new #[Title('Profile settings')] class extends Component {
     @include('partials.settings-heading')
 
     <x-pages::settings.layout :heading="__('Profile')">
-        @if (session('success'))<div class="alert alert-success mb-5 text-sm">{{ session('success') }}</div>@endif
+        @if (session('success'))<x-auth-session-status class="mb-5" :status="session('success')" />@endif
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <label class="form-control w-full"><span class="label-text mb-2 font-medium">{{ __('Name') }}</span><input class="input input-bordered w-full @error('name') input-error @enderror" wire:model="name" type="text" required autofocus autocomplete="name" />@error('name')<span class="mt-1 text-xs text-error">{{ $message }}</span>@enderror</label>
+            <x-ob::input :label="__('Name')" wire:model="name" type="text" required autofocus autocomplete="name" />
 
             <div>
-                <label class="form-control w-full"><span class="label-text mb-2 font-medium">{{ __('Email') }}</span><input class="input input-bordered w-full @error('email') input-error @enderror" wire:model="email" type="email" required autocomplete="email" />@error('email')<span class="mt-1 text-xs text-error">{{ $message }}</span>@enderror</label>
+                <x-ob::input :label="__('Email')" wire:model="email" type="email" required autocomplete="email" />
 
                 @if ($this->hasUnverifiedEmail)
                     <div>
-                        <p class="mt-4 text-sm text-base-content/60">
+                        <p class="mt-4 text-sm text-fg-2">
                             {{ __('Your email address is unverified.') }}
 
-                            <button type="button" class="btn btn-ghost btn-sm mt-2" wire:click.prevent="resendVerificationNotification">
+                            <x-ob::button variant="ghost" size="sm" class="mt-2" wire:click.prevent="resendVerificationNotification">
                                 {{ __('Click here to re-send the verification email.') }}
-                            </button>
+                            </x-ob::button>
                         </p>
 
                         @if (session('status') === 'verification-link-sent')
-                            <p class="mt-2 text-sm font-medium text-success">
+                            <p class="mt-2 text-sm font-medium text-success-fg">
                                 {{ __('A new verification link has been sent to your email address.') }}
                             </p>
                         @endif
@@ -105,14 +105,7 @@ new #[Title('Profile settings')] class extends Component {
                 @endif
             </div>
 
-            <div class="flex items-center gap-4">
-                <div class="flex items-center justify-end">
-                    <button class="btn btn-primary" type="submit" data-test="update-profile-button">
-                        {{ __('Save') }}
-                    </button>
-                </div>
-
-            </div>
+            <x-ob::button variant="primary" type="submit" data-test="update-profile-button">{{ __('Save') }}</x-ob::button>
         </form>
 
         @if ($this->showDeleteUser)

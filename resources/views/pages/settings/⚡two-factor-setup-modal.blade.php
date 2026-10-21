@@ -32,6 +32,8 @@ new class extends Component {
     public function startTwoFactorSetup(): void
     {
         app(EnableTwoFactorAuthentication::class)(auth()->user());
+        $this->reset('code', 'showVerificationStep');
+        $this->resetErrorBag();
         $this->loadSetupData();
         $this->showModal = true;
     }
@@ -88,28 +90,36 @@ new class extends Component {
 }; ?>
 
 <div>
-    @if ($showModal)
-        <div class="modal modal-open" role="dialog">
-        <div class="modal-box max-w-md" x-data="{ copied: false }">
-            <button type="button" class="btn btn-circle btn-ghost btn-sm absolute right-3 top-3" wire:click="closeModal" aria-label="Close">✕</button>
-            <div class="mb-6 text-center">
-                <div class="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-primary/10 text-primary"><svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM15 14h2v2h-2zM19 14h1v5h-5v1M14 18h2" /></svg></div>
-                <h3 class="text-xl font-bold">{{ $showVerificationStep ? __('Verify authentication code') : __('Enable two-factor authentication') }}</h3>
-                <p class="mt-2 text-sm text-base-content/55">{{ $showVerificationStep ? __('Enter the 6-digit code from your authenticator app.') : __('Scan the QR code or enter the setup key in your authenticator app.') }}</p>
-            </div>
-
+    <x-ob::modal
+        wire:model="showModal"
+        :title="$showVerificationStep ? __('Verify authentication code') : __('Enable two-factor authentication')"
+        :description="$showVerificationStep ? __('Enter the 6-digit code from your authenticator app.') : __('Scan the QR code or enter the setup key in your authenticator app.')"
+    >
+        <div x-data="{ copied: false }">
             @if ($showVerificationStep)
-                <div class="space-y-5"><input class="input input-bordered w-full text-center font-mono text-xl tracking-[0.5em] @error('code') input-error @enderror" wire:model="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" autofocus />@error('code')<p class="text-sm text-error">{{ $message }}</p>@enderror<div class="grid grid-cols-2 gap-3"><button type="button" class="btn btn-ghost" wire:click="resetVerification">{{ __('Back') }}</button><button type="button" class="btn btn-primary" wire:click="confirmTwoFactor">{{ __('Confirm') }}</button></div></div>
+                <div class="space-y-5">
+                    <x-ob::field error-key="code" for="two-factor-code">
+                        <input id="two-factor-code" class="h-11 w-full min-w-0 rounded-lg border border-hairline bg-surface-1 px-3 text-center font-mono text-xl tracking-[0.5em] text-fg placeholder:text-fg-3 focus-ring in-data-invalid:border-danger" wire:model="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" aria-label="{{ __('Authentication code') }}" autofocus />
+                    </x-ob::field>
+                    <div class="grid grid-cols-2 gap-3">
+                        <x-ob::button variant="ghost" wire:click="resetVerification">{{ __('Back') }}</x-ob::button>
+                        <x-ob::button variant="primary" wire:click="confirmTwoFactor">{{ __('Confirm') }}</x-ob::button>
+                    </div>
+                </div>
             @else
-                @error('setupData')<div class="alert alert-error mb-4 text-sm">{{ $message }}</div>@enderror
-                @if ($qrCodeSvg)<div class="mx-auto mb-5 aspect-square w-64 rounded-box bg-white p-4">{!! $qrCodeSvg !!}</div>@endif
+                @error('setupData')<div class="mb-4 rounded-lg bg-danger-soft p-3 text-sm text-danger-fg">{{ $message }}</div>@enderror
+                @if ($qrCodeSvg)<div class="mx-auto mb-5 aspect-square w-64 max-w-full rounded-xl bg-white p-4">{!! $qrCodeSvg !!}</div>@endif
                 @if ($manualSetupKey)
-                    <div class="join mb-5 flex"><input class="input join-item input-bordered min-w-0 flex-1 font-mono" readonly value="{{ $manualSetupKey }}" /><button type="button" class="btn btn-secondary join-item" @click="navigator.clipboard.writeText('{{ $manualSetupKey }}'); copied = true; setTimeout(() => copied = false, 1500)"><span x-show="!copied">{{ __('Copy') }}</span><span x-show="copied" x-cloak>{{ __('Copied') }}</span></button></div>
+                    <div class="mb-5 flex gap-2">
+                        <x-ob::input class="min-w-0 flex-1 font-mono" :aria-label="__('Setup key')" readonly value="{{ $manualSetupKey }}" />
+                        <x-ob::button class="self-start" x-on:click="navigator.clipboard.writeText('{{ $manualSetupKey }}'); copied = true; setTimeout(() => copied = false, 1500)">
+                            <span x-show="!copied">{{ __('Copy') }}</span>
+                            <span x-show="copied" x-cloak>{{ __('Copied') }}</span>
+                        </x-ob::button>
+                    </div>
                 @endif
-                <button type="button" class="btn btn-primary w-full" wire:click="showVerificationIfNecessary" @disabled($errors->has('setupData'))>{{ __('Continue') }}</button>
+                <x-ob::button variant="primary" class="w-full" wire:click="showVerificationIfNecessary" :disabled="$errors->has('setupData')">{{ __('Continue') }}</x-ob::button>
             @endif
         </div>
-        <button type="button" class="modal-backdrop" wire:click="closeModal">Close</button>
-        </div>
-    @endif
+    </x-ob::modal>
 </div>

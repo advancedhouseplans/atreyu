@@ -84,15 +84,21 @@ new #[Title('Appearance settings')] class extends Component {
             <x-ob::section :heading="__('Accent')" :description="__('Used for buttons, links and highlights.')">
                 <div role="radiogroup" aria-label="{{ __('Accent') }}" class="flex flex-wrap gap-3">
                     @foreach (Accent::cases() as $option)
-                        <button
-                            type="button"
-                            role="radio"
-                            aria-label="{{ __(':accent accent', ['accent' => $option->label()]) }}"
-                            aria-checked="{{ $accent === $option->value ? 'true' : 'false' }}"
-                            x-on:click="$store.obTheme.apply({ accent: '{{ $option->value }}' }); $wire.selectAccent('{{ $option->value }}')"
-                            class="size-8 rounded-full border border-hairline transition duration-120 ease-ob aria-checked:ring-2 aria-checked:ring-fg aria-checked:ring-offset-2 aria-checked:ring-offset-surface-1 max-sm:size-11"
-                            style="background-color: {{ $option->swatch() }}"
-                        ></button>
+                        <label class="cursor-pointer">
+                            <input
+                                type="radio"
+                                name="accent"
+                                value="{{ $option->value }}"
+                                aria-label="{{ __(':accent accent', ['accent' => $option->label()]) }}"
+                                @checked($accent === $option->value)
+                                x-on:change="$store.obTheme.apply({ accent: $event.target.value }); $wire.selectAccent($event.target.value)"
+                                class="peer sr-only"
+                            >
+                            <span
+                                class="block size-8 rounded-full border border-hairline transition duration-120 ease-ob peer-checked:ring-2 peer-checked:ring-fg peer-checked:ring-offset-2 peer-checked:ring-offset-surface-1 peer-focus-visible:shadow-[0_0_0_1px_var(--color-accent),0_0_0_5px_var(--color-accent-soft)] max-sm:size-11"
+                                style="background-color: {{ $option->swatch() }}"
+                            ></span>
+                        </label>
                     @endforeach
                 </div>
                 @error('accent')

@@ -34,3 +34,13 @@ test('the saved preference is on the html element before paint', function () {
         ->assertSee('data-appearance="light" data-mode="light" data-accent="teal"', false)
         ->assertDontSee('data-theme=', false);
 });
+
+test('accent swatches are native radios with only the saved accent checked', function () {
+    $user = User::factory()->create(['accent' => Accent::Teal]);
+
+    $html = $this->actingAs($user)->get(route('appearance.edit'))->assertOk()->getContent();
+
+    expect(preg_match_all('/type="radio"\s+name="accent"/', $html))->toBe(count(Accent::cases()))
+        ->and(preg_match_all('/name="accent"[^>]*\schecked[\s>]/', $html))->toBe(1)
+        ->and($html)->toMatch('/value="teal"[^>]*\schecked/');
+});

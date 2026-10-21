@@ -132,52 +132,75 @@ new #[Title('Security settings')] class extends Component {
 <section class="w-full p-5 sm:p-7 lg:p-8">
     @include('partials.settings-heading')
     <x-pages::settings.layout :heading="__('Security')">
-        @if (session('success'))<div class="alert alert-success mb-5 text-sm">{{ session('success') }}</div>@endif
+        <div class="space-y-6">
+            @if (session('success'))<x-auth-session-status :status="session('success')" />@endif
 
-        <section class="card rounded-3xl border border-base-content/5 bg-base-100/80 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.5)] ring-1 ring-base-content/5 backdrop-blur-xl">
-            <div class="card-body">
-                <h3 class="card-title text-lg">{{ __('Update password') }}</h3>
-                <p class="text-sm text-base-content/55">{{ __('Use a long, random password to stay secure.') }}</p>
-                <form wire:submit="updatePassword" class="mt-4 space-y-4">
-                    @foreach ([['current_password', __('Current password'), 'current-password'], ['password', __('New password'), 'new-password'], ['password_confirmation', __('Confirm password'), 'new-password']] as [$field, $label, $autocomplete])
-                        <label class="form-control w-full"><span class="label-text mb-2 font-medium">{{ $label }}</span><input class="input input-bordered w-full @error($field) input-error @enderror" wire:model="{{ $field }}" type="password" required autocomplete="{{ $autocomplete }}" />@error($field)<span class="mt-1 text-xs text-error">{{ $message }}</span>@enderror</label>
-                    @endforeach
-                    <button class="btn btn-primary" type="submit" data-test="update-password-button">{{ __('Save password') }}</button>
-                </form>
-            </div>
-        </section>
+            <x-ob::card>
+                <x-ob::section :heading="__('Update password')" :description="__('Use a long, random password to stay secure.')">
+                    <form wire:submit="updatePassword" class="space-y-4">
+                        @foreach ([['current_password', __('Current password'), 'current-password'], ['password', __('New password'), 'new-password'], ['password_confirmation', __('Confirm password'), 'new-password']] as [$field, $label, $autocomplete])
+                            <x-ob::password :label="$label" wire:model="{{ $field }}" required autocomplete="{{ $autocomplete }}" />
+                        @endforeach
+                        <x-ob::button variant="primary" type="submit" data-test="update-password-button">{{ __('Save password') }}</x-ob::button>
+                    </form>
+                </x-ob::section>
+            </x-ob::card>
 
-        @if ($canManageTwoFactor)
-            <section class="card mt-6 rounded-3xl border border-base-content/5 bg-base-100/80 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.5)] ring-1 ring-base-content/5 backdrop-blur-xl" wire:cloak>
-                <div class="card-body">
-                    <div class="flex items-center justify-between gap-4"><div><h3 class="card-title text-lg">{{ __('Two-factor authentication') }}</h3><p class="mt-1 text-sm text-base-content/55">{{ __('Add an authenticator app as a second sign-in step.') }}</p></div><span class="badge {{ $twoFactorEnabled ? 'badge-success' : 'badge-ghost' }}">{{ $twoFactorEnabled ? __('Enabled') : __('Off') }}</span></div>
-                    @if ($twoFactorEnabled)
-                        <div class="mt-4 space-y-5"><p class="text-sm text-base-content/70">{{ __('You will be prompted for a secure code from your authenticator during login.') }}</p><button type="button" class="btn btn-error" wire:click="disable">{{ __('Disable 2FA') }}</button><livewire:pages::settings.two-factor.recovery-codes :$requiresConfirmation /></div>
-                    @else
-                        <div class="mt-4"><button type="button" class="btn btn-primary" wire:click="$dispatch('start-two-factor-setup')">{{ __('Enable 2FA') }}</button><livewire:pages::settings.two-factor-setup-modal :requires-confirmation="$requiresConfirmation" /></div>
-                    @endif
-                </div>
-            </section>
-        @endif
+            @if ($canManageTwoFactor)
+                <x-ob::card wire:cloak>
+                    <x-ob::section :heading="__('Two-factor authentication')" :description="__('Add an authenticator app as a second sign-in step.')">
+                        <x-slot:actions>
+                            <x-ob::badge :color="$twoFactorEnabled ? 'success' : 'neutral'" dot>{{ $twoFactorEnabled ? __('Enabled') : __('Off') }}</x-ob::badge>
+                        </x-slot:actions>
 
-        @if ($canManagePasskeys)
-            <section class="card mt-6 rounded-3xl border border-base-content/5 bg-base-100/80 shadow-[0_18px_50px_-36px_rgba(0,0,0,0.5)] ring-1 ring-base-content/5 backdrop-blur-xl" wire:cloak>
-                <div class="card-body">
-                    <h3 class="card-title text-lg">{{ __('Passkeys') }}</h3><p class="text-sm text-base-content/55">{{ __('Use biometrics or a device PIN for passwordless sign-in.') }}</p>
-                    <div class="mt-4 divide-y divide-base-content/10 rounded-box border border-base-content/10">
-                        @forelse ($passkeys as $passkey)
-                            <div class="flex items-center justify-between gap-4 p-4"><div class="min-w-0"><div class="flex items-center gap-2"><span class="truncate font-semibold">{{ $passkey['name'] }}</span>@if ($passkey['authenticator'])<span class="badge badge-ghost badge-sm">{{ $passkey['authenticator'] }}</span>@endif</div><p class="mt-1 text-xs text-base-content/45">{{ __('Added :time', ['time' => $passkey['created_at_diff']]) }}@if ($passkey['last_used_at_diff']) · {{ __('Last used :time', ['time' => $passkey['last_used_at_diff']]) }}@endif</p></div><button type="button" class="btn btn-square btn-ghost btn-sm text-error" wire:click="confirmDelete({{ $passkey['id'] }})" aria-label="{{ __('Remove passkey') }}">×</button></div>
-                        @empty
-                            <div class="p-6 text-center text-sm text-base-content/50">{{ __('No passkeys yet') }}</div>
-                        @endforelse
-                    </div>
-                    <div class="mt-4"><x-passkey-registration /></div>
-                </div>
-            </section>
-        @endif
+                        @if ($twoFactorEnabled)
+                            <div class="space-y-5">
+                                <p class="text-sm text-fg-2">{{ __('You will be prompted for a secure code from your authenticator during login.') }}</p>
+                                <x-ob::button variant="danger" wire:click="disable">{{ __('Disable 2FA') }}</x-ob::button>
+                                <livewire:pages::settings.two-factor.recovery-codes :$requiresConfirmation />
+                            </div>
+                        @else
+                            <div>
+                                <x-ob::button variant="primary" wire:click="$dispatch('start-two-factor-setup')">{{ __('Enable 2FA') }}</x-ob::button>
+                                <livewire:pages::settings.two-factor-setup-modal :requires-confirmation="$requiresConfirmation" />
+                            </div>
+                        @endif
+                    </x-ob::section>
+                </x-ob::card>
+            @endif
+
+            @if ($canManagePasskeys)
+                <x-ob::card wire:cloak>
+                    <x-ob::section :heading="__('Passkeys')" :description="__('Use biometrics or a device PIN for passwordless sign-in.')">
+                        <div class="divide-y divide-hairline rounded-xl border border-hairline">
+                            @forelse ($passkeys as $passkey)
+                                <div class="flex items-center justify-between gap-4 p-4" wire:key="passkey-{{ $passkey['id'] }}">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <span class="truncate font-semibold">{{ $passkey['name'] }}</span>
+                                            @if ($passkey['authenticator'])<x-ob::badge>{{ $passkey['authenticator'] }}</x-ob::badge>@endif
+                                        </div>
+                                        <p class="mt-1 text-xs text-fg-3">{{ __('Added :time', ['time' => $passkey['created_at_diff']]) }}@if ($passkey['last_used_at_diff']) · {{ __('Last used :time', ['time' => $passkey['last_used_at_diff']]) }}@endif</p>
+                                    </div>
+                                    <x-ob::button variant="ghost" icon="trash" :label="__('Remove passkey')" wire:click="confirmDelete({{ $passkey['id'] }})" />
+                                </div>
+                            @empty
+                                <div class="p-6 text-center text-sm text-fg-3">{{ __('No passkeys yet') }}</div>
+                            @endforelse
+                        </div>
+                        <x-passkey-registration />
+                    </x-ob::section>
+                </x-ob::card>
+            @endif
+        </div>
     </x-pages::settings.layout>
 
-    @if ($showDeleteModal)
-        <div class="modal modal-open" role="dialog"><div class="modal-box"><h3 class="text-lg font-bold">{{ __('Remove passkey') }}</h3><p class="py-4 text-sm text-base-content/65">{{ __('Are you sure you want to remove the passkey ":name"?', ['name' => $deletingPasskeyName]) }}</p><div class="modal-action"><button type="button" class="btn btn-ghost" wire:click="closeDeleteModal">{{ __('Cancel') }}</button><button type="button" class="btn btn-error" wire:click="deletePasskey">{{ __('Remove passkey') }}</button></div></div><button type="button" class="modal-backdrop" wire:click="closeDeleteModal">Close</button></div>
-    @endif
+    <x-ob::modal wire:model="showDeleteModal" :title="__('Remove passkey')" size="sm">
+        <p class="text-sm text-fg-2">{{ __('Are you sure you want to remove the passkey ":name"?', ['name' => $deletingPasskeyName]) }}</p>
+
+        <x-slot:footer>
+            <x-ob::button variant="ghost" wire:click="closeDeleteModal">{{ __('Cancel') }}</x-ob::button>
+            <x-ob::button variant="danger" wire:click="deletePasskey">{{ __('Remove passkey') }}</x-ob::button>
+        </x-slot:footer>
+    </x-ob::modal>
 </section>

@@ -46,46 +46,44 @@ new class extends Component {
 }; ?>
 
 <div
-    class="space-y-6 rounded-box border border-base-content/10 bg-base-200 p-5"
+    class="space-y-6 rounded-xl border border-hairline bg-surface-2 p-5"
     wire:cloak
     x-data="{ showRecoveryCodes: false }"
 >
     <div class="space-y-2">
-        <div class="flex items-center gap-2">
-            <h4 class="font-bold">{{ __('2FA recovery codes') }}</h4>
-        </div>
-        <p class="text-sm text-base-content/55">
+        <h4 class="font-semibold">{{ __('2FA recovery codes') }}</h4>
+        <p class="text-sm text-fg-2">
             {{ __('Recovery codes let you regain access if you lose your 2FA device. Store them in a secure password manager.') }}
         </p>
     </div>
 
     <div>
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button type="button" class="btn btn-primary btn-sm"
+            <x-ob::button variant="primary" size="sm"
                 x-show="!showRecoveryCodes"
-                @click="showRecoveryCodes = true;"
+                x-on:click="showRecoveryCodes = true"
                 aria-expanded="false"
                 aria-controls="recovery-codes-section"
             >
                 {{ __('View recovery codes') }}
-            </button>
+            </x-ob::button>
 
-            <button type="button" class="btn btn-primary btn-sm"
+            <x-ob::button variant="primary" size="sm"
                 x-show="showRecoveryCodes"
-                @click="showRecoveryCodes = false"
+                x-on:click="showRecoveryCodes = false"
                 aria-expanded="true"
                 aria-controls="recovery-codes-section"
             >
                 {{ __('Hide recovery codes') }}
-            </button>
+            </x-ob::button>
 
             @if (filled($recoveryCodes))
-                <button type="button" class="btn btn-secondary btn-sm"
+                <x-ob::button size="sm"
                     x-show="showRecoveryCodes"
                     wire:click="regenerateRecoveryCodes"
                 >
                     {{ __('Regenerate codes') }}
-                </button>
+                </x-ob::button>
             @endif
         </div>
 
@@ -98,12 +96,12 @@ new class extends Component {
         >
             <div class="mt-3 space-y-3">
                 @error('recoveryCodes')
-                    <div class="alert alert-error text-sm">{{ $message }}</div>
+                    <div class="rounded-lg bg-danger-soft p-3 text-sm text-danger-fg">{{ $message }}</div>
                 @enderror
 
                 @if (filled($recoveryCodes))
                     <div
-                        class="grid gap-1 rounded-box bg-base-300 p-4 font-mono text-sm"
+                        class="grid gap-1 rounded-lg bg-surface-3 p-4 font-mono text-sm"
                         role="list"
                         aria-label="{{ __('Recovery codes') }}"
                     >
@@ -117,7 +115,7 @@ new class extends Component {
                             </div>
                         @endforeach
                     </div>
-                    <p class="text-xs text-base-content/55">
+                    <p class="text-xs text-fg-3">
                         {{ __('Each recovery code can be used once to access your account and will be removed after use. If you need more, click Regenerate codes above.') }}
                     </p>
                 @endif

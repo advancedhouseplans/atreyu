@@ -19,13 +19,14 @@ new class extends Component {
 }; ?>
 
 <div>
-    <input id="confirm-user-deletion" type="checkbox" class="modal-toggle" @checked($errors->isNotEmpty()) />
-    <div class="modal" role="dialog">
-        <form wire:submit="deleteUser" class="modal-box space-y-6">
-            <div><h3 class="text-lg font-bold">{{ __('Are you sure you want to delete your account?') }}</h3><p class="mt-2 text-sm text-base-content/60">{{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Enter your password to confirm.') }}</p></div>
-            <label class="form-control w-full"><span class="label-text mb-2 font-medium">{{ __('Password') }}</span><input class="input input-bordered w-full @error('password') input-error @enderror" wire:model="password" type="password" />@error('password')<span class="mt-1 text-xs text-error">{{ $message }}</span>@enderror</label>
-            <div class="modal-action"><label for="confirm-user-deletion" class="btn btn-ghost">{{ __('Cancel') }}</label><button class="btn btn-error" type="submit" data-test="confirm-delete-user-button">{{ __('Delete account') }}</button></div>
+    <x-ob::modal name="delete-account" :title="__('Are you sure you want to delete your account?')" :description="__('Once your account is deleted, all of its resources and data will be permanently deleted. Enter your password to confirm.')">
+        <form id="delete-account-form" wire:submit="deleteUser">
+            <x-ob::password :label="__('Password')" wire:model="password" />
         </form>
-        <label class="modal-backdrop" for="confirm-user-deletion">Close</label>
-    </div>
+
+        <x-slot:footer>
+            <x-ob::button variant="ghost" x-on:click="$dispatch('modal-close', { name: 'delete-account' })">{{ __('Cancel') }}</x-ob::button>
+            <x-ob::button variant="danger" type="submit" form="delete-account-form" data-test="confirm-delete-user-button">{{ __('Delete account') }}</x-ob::button>
+        </x-slot:footer>
+    </x-ob::modal>
 </div>

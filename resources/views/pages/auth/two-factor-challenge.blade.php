@@ -39,7 +39,7 @@
             <div x-show="showRecoveryInput">
                 <div class="text-center">
                     <h1 class="text-2xl font-semibold tracking-[-0.02em]">{{ __('Recovery code') }}</h1>
-                    <p class="mt-2 text-sm text-fg-2">{{ __('Please confirm access to your account by entering one of your emergency recovery codes.') }}</p>
+                    <p class="mt-2 text-sm text-fg-2">{{ __('Confirm access to your account by entering one of your emergency recovery codes.') }}</p>
                 </div>
             </div>
 
@@ -48,33 +48,28 @@
 
                 <div class="space-y-5 text-center">
                     <div x-show="!showRecoveryInput">
-                        <div class="flex items-center justify-center my-5" x-ref="otp">
-                            <input class="input input-bordered w-full text-center font-mono text-xl tracking-[0.5em]" x-model="code" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" aria-label="OTP Code" />
-                            @error('code')<p class="mt-2 text-sm text-error">{{ $message }}</p>@enderror
+                        <div class="my-5" x-ref="otp">
+                            <x-ob::field error-key="code" for="code">
+                                <input id="code" class="h-11 w-full min-w-0 rounded-lg border border-hairline bg-surface-1 px-3 text-center font-mono text-xl tracking-[0.5em] text-fg placeholder:text-fg-3 focus-ring in-data-invalid:border-danger" x-model="code" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" aria-label="{{ __('Authentication code') }}" />
+                            </x-ob::field>
                         </div>
                     </div>
 
                     <div x-show="showRecoveryInput">
-                        <div class="my-5">
-                            <input class="input input-bordered w-full" type="text" name="recovery_code" x-ref="recovery_code" x-bind:required="showRecoveryInput" autocomplete="one-time-code" x-model="recovery_code" />
+                        <div class="my-5 text-left">
+                            <x-ob::input name="recovery_code" :aria-label="__('Recovery code')" x-ref="recovery_code" x-bind:required="showRecoveryInput" autocomplete="one-time-code" x-model="recovery_code" />
                         </div>
-
-                        @error('recovery_code')
-                            <p class="text-sm text-error">{{ $message }}</p>
-                        @enderror
                     </div>
 
-                    <button class="btn btn-primary w-full" type="submit">
-                        {{ __('Continue') }}
-                    </button>
+                    <x-ob::button variant="primary" type="submit" class="w-full">{{ __('Continue') }}</x-ob::button>
                 </div>
 
                 <div class="mt-5 space-x-0.5 text-sm leading-5 text-center">
-                    <span class="opacity-50">{{ __('or you can') }}</span>
-                    <div class="inline font-medium underline cursor-pointer opacity-80">
-                        <span x-show="!showRecoveryInput" @click="toggleInput()">{{ __('login using a recovery code') }}</span>
-                        <span x-show="showRecoveryInput" @click="toggleInput()">{{ __('login using an authentication code') }}</span>
-                    </div>
+                    <span class="text-fg-3">{{ __('or you can') }}</span>
+                    <button type="button" class="rounded font-medium text-accent-fg hover:underline focus-ring" x-on:click="toggleInput()">
+                        <span x-show="!showRecoveryInput">{{ __('log in using a recovery code') }}</span>
+                        <span x-show="showRecoveryInput">{{ __('log in using an authentication code') }}</span>
+                    </button>
                 </div>
             </form>
         </div>

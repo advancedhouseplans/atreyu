@@ -66,36 +66,27 @@
     }"
 >
     <template x-if="!supported">
-        <p class="text-sm text-base-content/60">{{ __('Passkeys are not supported in this browser.') }}</p>
+        <p class="text-sm text-fg-2">{{ __('Passkeys are not supported in this browser.') }}</p>
     </template>
 
     <template x-if="supported && !showForm">
         <div>
-            <button type="button" class="btn btn-primary" x-on:click="showForm = true">
-                <span class="text-lg leading-none">+</span>
-                {{ __('Add passkey') }}
-            </button>
+            <x-ob::button type="button" variant="primary" icon="plus" x-on:click="showForm = true">{{ __('Add passkey') }}</x-ob::button>
         </div>
     </template>
 
     <template x-if="supported && showForm">
-        <div class="space-y-4 rounded-box border border-base-content/10 bg-base-200 p-4">
-            <label class="form-control w-full">
-                <span class="label-text mb-2 font-medium">{{ __('Passkey name') }}</span>
-                <input class="input input-bordered w-full" x-model="name" placeholder="{{ __('e.g., MacBook Pro, iPhone') }}" x-on:keydown.enter.prevent="register()" x-ref="passkeyNameInput" x-init="$nextTick(() => $refs.passkeyNameInput?.focus())" />
-            </label>
-            <p class="text-sm text-base-content/60">{{ __('Give this passkey a name to help you identify it later.') }}</p>
+        <div class="space-y-4 rounded-xl border border-hairline bg-surface-2 p-4">
+            <x-ob::input :label="__('Passkey name')" :placeholder="__('e.g., MacBook Pro, iPhone')" :hint="__('Give this passkey a name to help you identify it later.')" x-model="name" x-on:keydown.enter.prevent="register()" x-ref="passkeyNameInput" x-init="$nextTick(() => $refs.passkeyNameInput?.focus())" />
 
-            <p x-show="error" x-text="error" x-cloak class="text-error text-sm"></p>
+            <p x-show="error" x-text="error" x-cloak class="text-sm text-danger-fg"></p>
 
             <div class="flex gap-2">
-                <button type="button" class="btn btn-primary" x-on:click="register()" x-bind:disabled="loading || !name.trim()">
+                <x-ob::button type="button" variant="primary" x-on:click="register()" x-bind:disabled="loading || !name.trim()">
                     <span x-show="!loading">{{ __('Register passkey') }}</span>
                     <span x-show="loading" x-cloak>{{ __('Registering...') }}</span>
-                </button>
-                <button type="button" class="btn btn-ghost" x-on:click="cancel()">
-                    {{ __('Cancel') }}
-                </button>
+                </x-ob::button>
+                <x-ob::button type="button" variant="ghost" x-on:click="cancel()">{{ __('Cancel') }}</x-ob::button>
             </div>
         </div>
     </template>
