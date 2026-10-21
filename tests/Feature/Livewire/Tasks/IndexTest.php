@@ -93,3 +93,23 @@ it('defaults a quick-created task to the current user', function () {
         ->assertSet('showCreate', true)
         ->assertSet('assigneeId', (string) $user->id);
 });
+
+it('shows an empty state in the list view when nothing matches', function () {
+    Livewire::actingAs(User::factory()->create())->test(Index::class)
+        ->set('display', 'list')
+        ->assertSee('Nothing to do?');
+});
+
+it('renders board card details for an urgent assigned task', function () {
+    $user = User::factory()->create();
+    Task::factory()->for($user, 'assignee')->create([
+        'title' => 'Fix the VPN',
+        'priority' => TaskPriority::Urgent,
+        'due_date' => now()->subDay(),
+    ]);
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->assertSee('Fix the VPN')
+        ->assertSee('Urgent')
+        ->assertSee('Move Fix the VPN');
+});

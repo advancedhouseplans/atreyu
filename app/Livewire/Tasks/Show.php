@@ -13,6 +13,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskComment;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -53,6 +54,26 @@ class Show extends Component
 
         $moveTask->handle($this->task, $taskStatus, actor: auth()->user());
         $this->refreshTask();
+    }
+
+    public function updateTitle(string $title, UpdateTaskDetails $updateTask): void
+    {
+        $validated = Validator::make(['title' => trim($title)], ['title' => ['required', 'string', 'max:255']])->validate();
+
+        $updateTask->handle($this->task, ['title' => $validated['title']], auth()->user());
+        $this->refreshTask();
+        $this->fillEditForm();
+        $this->dispatch('toast', message: 'Title updated', variant: 'success');
+    }
+
+    public function updatePriority(string $priority, UpdateTaskDetails $updateTask): void
+    {
+        $validated = Validator::make(['priority' => $priority], ['priority' => ['required', Rule::enum(TaskPriority::class)]])->validate();
+
+        $updateTask->handle($this->task, ['priority' => $validated['priority']], auth()->user());
+        $this->refreshTask();
+        $this->fillEditForm();
+        $this->dispatch('toast', message: 'Priority updated', variant: 'success');
     }
 
     public function updateAssignee(?int $userId, UpdateTaskDetails $updateTask): void

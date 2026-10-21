@@ -85,3 +85,49 @@ it('archives and reopens a task without deleting it', function () {
     expect($task->fresh()->archived_at)->toBeNull()
         ->and($task->activities()->pluck('event')->all())->toBe(['archived', 'reopened']);
 });
+
+it('renames a task from the inline title editor', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->create(['title' => 'Old title']);
+
+    Livewire::actingAs($user)->test(Show::class, ['task' => $task])
+        ->call('updateTitle', '  Order the workstation  ')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+
+    expect($task->fresh()->title)->toBe('Order the workstation');
+});
+
+it('rejects a blank inline title and keeps the old one', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->create(['title' => 'Old title']);
+
+    Livewire::actingAs($user)->test(Show::class, ['task' => $task])
+        ->call('updateTitle', '   ')
+        ->assertHasErrors(['title' => 'required']);
+
+    expect($task->fresh()->title)->toBe('Old title');
+});
+
+it('changes priority from the inline editor', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->create(['priority' => TaskPriority::Normal]);
+
+    Livewire::actingAs($user)->test(Show::class, ['task' => $task])
+        ->call('updatePriority', 'urgent')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+
+    expect($task->fresh()->priority)->toBe(TaskPriority::Urgent);
+});
+
+it('rejects an unknown priority', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->create(['priority' => TaskPriority::Normal]);
+
+    Livewire::actingAs($user)->test(Show::class, ['task' => $task])
+        ->call('updatePriority', 'extreme')
+        ->assertHasErrors(['priority']);
+
+    expect($task->fresh()->priority)->toBe(TaskPriority::Normal);
+});

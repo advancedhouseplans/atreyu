@@ -1,159 +1,167 @@
 @php
-    $projectOptions = $projects->map(fn ($project) => ['id' => (string) $project->id, 'name' => $project->name]);
-    $userOptions = $users->map(fn ($user) => ['id' => (string) $user->id, 'name' => $user->name]);
-    $typeOptions = collect($types)->map(fn ($type) => ['id' => $type->value, 'name' => $type->label()]);
-    $statusOptions = collect($statuses)->map(fn ($taskStatus) => ['id' => $taskStatus->value, 'name' => $taskStatus->label()]);
-    $difficultyOptions = collect($difficulties)->map(fn ($item) => ['id' => (string) $item->value, 'name' => $item->label()]);
-    $priorityOptions = collect($priorities)->map(fn ($item) => ['id' => $item->value, 'name' => $item->label()]);
+    $toOptions = fn ($items, $value = 'value') => collect($items)->map(fn ($item) => ['value' => (string) $item->{$value}, 'label' => $item->label()])->all();
+
+    $projectOptions = $projects->map(fn ($project) => ['value' => (string) $project->id, 'label' => $project->name])->all();
+    $assigneeOptions = $users->map(fn ($user) => ['value' => (string) $user->id, 'label' => $user->name])->all();
+    $typeOptions = $toOptions($types);
+    $statusOptions = $toOptions($statuses);
+    $difficultyOptions = $toOptions($difficulties);
+    $priorityOptions = $toOptions($priorities);
+
+    $priorityColor = fn ($priority) => match ($priority) {
+        \App\Enums\TaskPriority::Urgent => 'danger',
+        \App\Enums\TaskPriority::High => 'warning',
+        \App\Enums\TaskPriority::Normal => 'info',
+        default => 'neutral',
+    };
+    $statusColor = fn ($taskStatus) => match ($taskStatus) {
+        \App\Enums\TaskStatus::Done => 'success',
+        \App\Enums\TaskStatus::InProgress => 'accent',
+        \App\Enums\TaskStatus::Review => 'warning',
+        default => 'neutral',
+    };
+    $typeColor = fn ($type) => $type === \App\Enums\TaskType::Bug ? 'danger' : 'info';
 @endphp
 
-<div class="p-5 sm:p-7 lg:p-8" wire:loading.class="opacity-70">
+<div class="p-5 sm:p-7 lg:p-8">
     <x-ob::page-header title="Tasks">
         <x-slot:actions>
-            <x-button class="btn-primary rounded-full px-5 shadow-sm" icon="o-plus" wire:click="openCreate" label="New task" />
+            <x-ob::button variant="primary" icon="plus" wire:click="openCreate">New task</x-ob::button>
         </x-slot:actions>
     </x-ob::page-header>
 
     <div class="mb-5 flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
         <div class="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
-            <x-input class="rounded-full bg-base-100/75 shadow-sm backdrop-blur-xl" icon="o-magnifying-glass" type="search" wire:model.live.debounce.300ms="q" placeholder="Search tasks or ID" />
-            <x-select class="rounded-full bg-base-100/75 shadow-sm backdrop-blur-xl" icon="o-user" wire:model.live="scope" :options="[['id' => 'mine', 'name' => 'My work'], ['id' => 'all', 'name' => 'Everyone'], ['id' => 'unassigned', 'name' => 'Unassigned']]" />
+            <x-ob::input icon="magnifying-glass" type="search" wire:model.live.debounce.300ms="q" placeholder="Search tasks or ID" aria-label="Search tasks" />
+            <x-ob::select wire:model.live="scope" :options="[['value' => 'mine', 'label' => 'My work'], ['value' => 'all', 'label' => 'Everyone'], ['value' => 'unassigned', 'label' => 'Unassigned']]" aria-label="Filter by assignee" />
             @if ($display === 'list')
-                <x-select class="rounded-full bg-base-100/75 shadow-sm backdrop-blur-xl" icon="o-bars-3-bottom-left" wire:model.live="status" placeholder="Any status" placeholder-value="" :options="$statusOptions" />
+                <x-ob::select wire:model.live="status" placeholder="Any status" :options="$statusOptions" aria-label="Filter by status" />
             @endif
-            <x-select class="rounded-full bg-base-100/75 shadow-sm backdrop-blur-xl" icon="o-folder" wire:model.live="project" placeholder="Any project" placeholder-value="" :options="$projectOptions" />
-            <x-select class="rounded-full bg-base-100/75 shadow-sm backdrop-blur-xl" icon="o-flag" wire:model.live="priorityFilter" placeholder="Any priority" placeholder-value="" :options="$priorityOptions" />
-            <x-select class="rounded-full bg-base-100/75 shadow-sm backdrop-blur-xl" icon="o-archive-box" wire:model.live="visibility" :options="[['id' => 'active', 'name' => 'Active'], ['id' => 'archived', 'name' => 'Archived']]" />
+            <x-ob::select wire:model.live="project" placeholder="Any project" :options="$projectOptions" aria-label="Filter by project" />
+            <x-ob::select wire:model.live="priorityFilter" placeholder="Any priority" :options="$priorityOptions" aria-label="Filter by priority" />
+            <x-ob::select wire:model.live="visibility" :options="[['value' => 'active', 'label' => 'Active'], ['value' => 'archived', 'label' => 'Archived']]" aria-label="Filter by visibility" />
             @if ($display === 'list')
-                <x-select class="rounded-full bg-base-100/75 shadow-sm backdrop-blur-xl" icon="o-arrows-up-down" wire:model.live="sortBy" :options="[
-                    ['id' => 'updated_at', 'name' => 'Recently updated'],
-                    ['id' => 'created_at', 'name' => 'Recently created'],
-                    ['id' => 'priority', 'name' => 'Priority'],
-                    ['id' => 'due_date', 'name' => 'Due date'],
-                    ['id' => 'difficulty', 'name' => 'Difficulty'],
-                    ['id' => 'title', 'name' => 'Title'],
-                ]" />
-                <button type="button" class="btn btn-square btn-secondary" wire:click="$set('sortDir', '{{ $sortDir === 'asc' ? 'desc' : 'asc' }}')" aria-label="Sort {{ $sortDir === 'asc' ? 'descending' : 'ascending' }}" title="Sort {{ $sortDir === 'asc' ? 'descending' : 'ascending' }}">
-                    <x-icon :name="$sortDir === 'asc' ? 'o-bars-arrow-up' : 'o-bars-arrow-down'" class="size-5" />
-                </button>
+                <x-ob::select wire:model.live="sortBy" :options="[
+                    ['value' => 'updated_at', 'label' => 'Recently updated'],
+                    ['value' => 'created_at', 'label' => 'Recently created'],
+                    ['value' => 'priority', 'label' => 'Priority'],
+                    ['value' => 'due_date', 'label' => 'Due date'],
+                    ['value' => 'difficulty', 'label' => 'Difficulty'],
+                    ['value' => 'title', 'label' => 'Title'],
+                ]" aria-label="Sort by" />
+                <x-ob::button
+                    :icon="$sortDir === 'asc' ? 'bars-arrow-up' : 'bars-arrow-down'"
+                    :label="$sortDir === 'asc' ? 'Sort descending' : 'Sort ascending'"
+                    wire:click="$set('sortDir', '{{ $sortDir === 'asc' ? 'desc' : 'asc' }}')"
+                    class="self-start"
+                />
             @endif
         </div>
-        <div class="join self-start rounded-full bg-base-100/70 p-1 shadow-sm ring-1 ring-base-content/5 backdrop-blur-xl">
-            <button type="button" wire:click="$set('display', 'board')" @class(['btn btn-sm join-item', 'btn-primary' => $display === 'board', 'btn-ghost' => $display !== 'board']) aria-label="Board view"><x-icon name="o-view-columns" class="size-4" />Board</button>
-            <button type="button" wire:click="$set('display', 'list')" @class(['btn btn-sm join-item', 'btn-primary' => $display === 'list', 'btn-ghost' => $display !== 'list']) aria-label="List view"><x-icon name="o-list-bullet" class="size-4" />List</button>
-        </div>
+        <x-ob::segmented
+            name="display"
+            label="Display"
+            wire:model.live="display"
+            class="self-start"
+            :options="[['value' => 'board', 'label' => 'Board', 'icon' => 'view-columns'], ['value' => 'list', 'label' => 'List', 'icon' => 'list-bullet']]"
+        />
     </div>
 
     @if ($display === 'board')
-        <div class="overflow-x-auto pb-3">
-            <div class="grid min-w-[70rem] grid-cols-4 gap-4">
-                @foreach ($statuses as $laneStatus)
-                    @php
-                        $laneTasks = $boardTasks->get($laneStatus->value, collect());
-                        $laneAccent = match ($laneStatus) {
-                            \App\Enums\TaskStatus::InProgress => 'bg-primary',
-                            \App\Enums\TaskStatus::Review => 'bg-warning',
-                            \App\Enums\TaskStatus::Done => 'bg-success',
-                            default => 'bg-base-content/25',
-                        };
-                    @endphp
-                    <section class="rounded-3xl border border-base-content/5 bg-base-100/45 p-3 shadow-[0_16px_45px_-36px_rgba(0,0,0,0.55)] backdrop-blur-xl" wire:key="lane-{{ $laneStatus->value }}">
-                        <header class="mb-3 flex items-center justify-between gap-3 px-1">
-                            <div class="flex items-center gap-2"><span class="size-2 rounded-full {{ $laneAccent }}"></span><h2 class="font-semibold">{{ $laneStatus->label() }}</h2></div>
-                            <span class="badge badge-sm badge-ghost">{{ $laneTasks->count() }}</span>
-                        </header>
-
-                        <div
-                            class="flex min-h-52 flex-col gap-3 rounded-box"
-                            wire:sort="moveTask"
-                            wire:sort:group="tasks"
-                            wire:sort:group-id="{{ $laneStatus->value }}"
-                        >
-                            @foreach ($laneTasks as $task)
-                                <article class="card cursor-default rounded-2xl border border-base-content/5 bg-base-100/85 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.5)] ring-1 ring-base-content/5" wire:key="board-task-{{ $task->id }}" wire:sort:item="{{ $task->id }}">
-                                    <div class="card-body gap-3 p-4">
-                                        <div class="flex items-center justify-between gap-3">
-                                            <span @class(['badge badge-sm', 'badge-error' => $task->type === \App\Enums\TaskType::Bug, 'badge-info' => $task->type === \App\Enums\TaskType::Build])>{{ $task->type->label() }}</span>
-                                            <button type="button" class="btn btn-ghost btn-xs btn-square cursor-grab touch-none text-base-content/45 active:cursor-grabbing" wire:sort:handle aria-label="Move {{ $task->title }}"><x-icon name="o-bars-3" class="size-4" /></button>
-                                        </div>
-
-                                        <div wire:sort:ignore>
-                                            <a href="{{ route('tasks.show', $task) }}" wire:navigate class="font-semibold leading-snug hover:text-primary">{{ $task->title }}</a>
-                                            @if ($task->description)<p class="mt-2 line-clamp-2 text-xs leading-5 text-base-content/50">{{ $task->description }}</p>@endif
-                                        </div>
-
-                                        <div class="flex items-center justify-between gap-3 border-t border-base-content/10 pt-3 text-xs text-base-content/50">
-                                            <span class="min-w-0 truncate"><span class="font-mono text-[0.65rem] font-semibold text-base-content/35">{{ $task->identifier }}</span> · {{ $task->project->name }}</span>
-                                            <div class="flex shrink-0 items-center gap-2">
-                                                @if ($task->priority !== \App\Enums\TaskPriority::Normal)<span @class(['badge badge-xs', 'badge-error' => $task->priority === \App\Enums\TaskPriority::Urgent, 'badge-warning' => $task->priority === \App\Enums\TaskPriority::High, 'badge-ghost' => $task->priority === \App\Enums\TaskPriority::Low])>{{ $task->priority->label() }}</span>@endif
-                                                @if ($task->due_date)<span @class(['font-medium', 'text-error' => $task->due_date->isBefore(today()) && $task->status !== \App\Enums\TaskStatus::Done])>{{ $task->due_date->format('M j') }}</span>@endif
-                                                @if ($task->difficulty)<span class="font-medium" title="Difficulty {{ $task->difficulty->value }} of 5">{{ str_repeat('●', $task->difficulty->value) }}</span>@endif
-                                                @if ($task->assignee)<div class="avatar avatar-placeholder" title="{{ $task->assignee->name }}"><div class="w-7 rounded-full bg-neutral text-neutral-content"><span class="text-[0.65rem]">{{ $task->assignee->initials() }}</span></div></div>@endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
-                            @endforeach
-
-                            @if ($laneTasks->isEmpty())
-                                <div class="grid min-h-28 place-items-center rounded-box border border-dashed border-base-content/15 px-4 text-center text-xs text-base-content/40">Drop a task here</div>
+        <x-ob::kanban>
+            @foreach ($statuses as $laneStatus)
+                @php($laneTasks = $boardTasks->get($laneStatus->value, collect()))
+                <x-ob::kanban.column :id="$laneStatus->value" :title="$laneStatus->label()" :count="$laneTasks->count()" sort="moveTask" group="tasks" wire:key="lane-{{ $laneStatus->value }}">
+                    @foreach ($laneTasks as $task)
+                        <x-ob::kanban.card :id="$task->id" label="Move {{ $task->title }}" wire:key="board-task-{{ $task->id }}">
+                            <x-ob::badge :color="$typeColor($task->type)">{{ $task->type->label() }}</x-ob::badge>
+                            <a href="{{ route('tasks.show', $task) }}" wire:navigate class="mt-2 block text-sm font-medium leading-snug hover:text-accent-fg focus-ring rounded">{{ $task->title }}</a>
+                            @if ($task->description)
+                                <p class="mt-1 line-clamp-2 text-xs text-fg-3">{{ $task->description }}</p>
                             @endif
-                        </div>
-                    </section>
-                @endforeach
-            </div>
-        </div>
+                            <div class="mt-3 flex items-center justify-between gap-3 border-t border-hairline pt-3 text-xs text-fg-3">
+                                <span class="min-w-0 truncate"><span class="font-mono">{{ $task->identifier }}</span> · {{ $task->project->name }}</span>
+                                <div class="flex shrink-0 items-center gap-2">
+                                    @if ($task->priority !== \App\Enums\TaskPriority::Normal)
+                                        <x-ob::badge :color="$priorityColor($task->priority)">{{ $task->priority->label() }}</x-ob::badge>
+                                    @endif
+                                    @if ($task->due_date)
+                                        <span @class(['font-medium', 'text-danger-fg' => $task->due_date->isBefore(today()) && $task->status !== \App\Enums\TaskStatus::Done])>{{ $task->due_date->format('M j') }}</span>
+                                    @endif
+                                    @if ($task->difficulty)
+                                        <span title="Difficulty {{ $task->difficulty->value }} of 5">{{ str_repeat('●', $task->difficulty->value) }}</span>
+                                    @endif
+                                    @if ($task->assignee)
+                                        <x-ob::avatar size="sm" :initials="$task->assignee->initials()" title="{{ $task->assignee->name }}" />
+                                    @endif
+                                </div>
+                            </div>
+                        </x-ob::kanban.card>
+                    @endforeach
+                    <x-slot:empty>Drop a task here</x-slot:empty>
+                </x-ob::kanban.column>
+            @endforeach
+        </x-ob::kanban>
+    @elseif ($tasks->isEmpty())
+        <x-ob::card :padding="false">
+            <x-ob::empty-state icon="clipboard-document-check" heading="Nothing to do?">Create a task or pick one from Reports.</x-ob::empty-state>
+        </x-ob::card>
     @else
-        <section class="overflow-hidden rounded-3xl border border-base-content/5 bg-base-100/80 shadow-[0_20px_60px_-38px_rgba(0,0,0,0.55)] ring-1 ring-base-content/5 backdrop-blur-xl">
-            <div class="overflow-x-auto">
-                <table class="table">
-                    <thead><tr><th>Task</th><th>Project</th><th>Type</th><th>Priority</th><th>Difficulty</th><th>Status</th><th>Due</th><th>Assignee</th></tr></thead>
-                    <tbody>
-                        @forelse ($tasks as $task)
-                            @php
-                                $statusClass = match ($task->status) {
-                                    \App\Enums\TaskStatus::Done => 'badge-success',
-                                    \App\Enums\TaskStatus::InProgress => 'badge-primary',
-                                    \App\Enums\TaskStatus::Review => 'badge-warning',
-                                    default => 'badge-ghost',
-                                };
-                            @endphp
-                            <tr class="transition-colors hover:bg-base-content/[0.035]" wire:key="task-{{ $task->id }}">
-                                <td class="min-w-72"><div class="mb-1 font-mono text-[0.65rem] font-semibold text-base-content/35">{{ $task->identifier }}</div><a href="{{ route('tasks.show', $task) }}" wire:navigate class="font-semibold hover:text-primary">{{ $task->title }}</a>@if ($task->report)<div class="mt-1 text-xs text-base-content/45">From report #{{ $task->report->id }}</div>@endif</td>
-                                <td><span class="badge badge-secondary">{{ $task->project->name }}</span></td>
-                                <td><span @class(['badge badge-sm', 'badge-error' => $task->type === \App\Enums\TaskType::Bug, 'badge-info' => $task->type === \App\Enums\TaskType::Build])>{{ $task->type->label() }}</span></td>
-                                <td><span @class(['badge badge-sm', 'badge-error' => $task->priority === \App\Enums\TaskPriority::Urgent, 'badge-warning' => $task->priority === \App\Enums\TaskPriority::High, 'badge-info' => $task->priority === \App\Enums\TaskPriority::Normal, 'badge-ghost' => $task->priority === \App\Enums\TaskPriority::Low])>{{ $task->priority->label() }}</span></td>
-                                <td>{{ $task->difficulty?->value ? '● '.$task->difficulty->value.'/5' : '—' }}</td>
-                                <td><span class="badge badge-sm {{ $statusClass }}">{{ $task->status->label() }}</span></td>
-                                <td @class(['text-sm', 'font-semibold text-error' => $task->due_date?->isBefore(today()) && $task->status !== \App\Enums\TaskStatus::Done])>{{ $task->due_date?->format('M j, Y') ?? '—' }}</td>
-                                <td>{{ $task->assignee?->name ?? 'Unassigned' }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="8" class="py-16 text-center"><div class="font-semibold">Nothing to do?</div><div class="mt-1 text-sm text-base-content/50">Create a task or pick one from Reports.</div></td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        <x-ob::table>
+            <x-slot:head>
+                <x-ob::table.head class="w-[28%]">Task</x-ob::table.head>
+                <x-ob::table.head class="w-[12%]">Project</x-ob::table.head>
+                <x-ob::table.head class="w-[7%]">Type</x-ob::table.head>
+                <x-ob::table.head class="w-[9%]">Priority</x-ob::table.head>
+                <x-ob::table.head class="w-[9%]">Difficulty</x-ob::table.head>
+                <x-ob::table.head class="w-[11%]">Status</x-ob::table.head>
+                <x-ob::table.head class="w-[11%]">Due</x-ob::table.head>
+                <x-ob::table.head class="w-[13%]">Assignee</x-ob::table.head>
+            </x-slot:head>
+
+            @foreach ($tasks as $task)
+                <x-ob::table.row :href="route('tasks.show', $task)" wire:key="task-{{ $task->id }}" wire:transition>
+                    <x-ob::table.cell mobile="primary">
+                        <span class="block font-mono text-[11px] text-fg-3">{{ $task->identifier }}</span>
+                        <span class="font-medium">{{ $task->title }}</span>
+                        @if ($task->report)
+                            <span class="block truncate text-xs text-fg-3">From report #{{ $task->report->id }}</span>
+                        @endif
+                    </x-ob::table.cell>
+                    <x-ob::table.cell mobile="meta">{{ $task->project->name }}</x-ob::table.cell>
+                    <x-ob::table.cell mobile="hide"><x-ob::badge :color="$typeColor($task->type)">{{ $task->type->label() }}</x-ob::badge></x-ob::table.cell>
+                    <x-ob::table.cell mobile="meta"><x-ob::badge :color="$priorityColor($task->priority)">{{ $task->priority->label() }}</x-ob::badge></x-ob::table.cell>
+                    <x-ob::table.cell mobile="hide">{{ $task->difficulty?->value ? '● '.$task->difficulty->value.'/5' : '—' }}</x-ob::table.cell>
+                    <x-ob::table.cell mobile="meta"><x-ob::badge :color="$statusColor($task->status)">{{ $task->status->label() }}</x-ob::badge></x-ob::table.cell>
+                    <x-ob::table.cell mobile="meta" class="{{ $task->due_date?->isBefore(today()) && $task->status !== \App\Enums\TaskStatus::Done ? 'text-danger-fg' : '' }}">{{ $task->due_date?->format('M j, Y') ?? '—' }}</x-ob::table.cell>
+                    <x-ob::table.cell mobile="hide">{{ $task->assignee?->name ?? 'Unassigned' }}</x-ob::table.cell>
+                </x-ob::table.row>
+            @endforeach
+        </x-ob::table>
+
+        @if ($tasks->hasPages())
+            <div class="mt-4">
+                {{ $tasks->links() }}
             </div>
-            @if ($tasks->hasPages())<div class="border-t border-base-content/10 p-4">{{ $tasks->links() }}</div>@endif
-        </section>
+        @endif
     @endif
 
-    <x-modal wire:model="showCreate" title="New task" subtitle="Add work directly to a project" box-class="max-w-2xl">
-        <form wire:submit="createTask" class="space-y-4">
-            <x-input label="Title" wire:model="title" placeholder="Build a new PC for the new employee" required autofocus />
-            <x-textarea label="Description" wire:model="description" rows="4" placeholder="Add the context someone needs to pick this up." />
+    <x-ob::modal wire:model="showCreate" title="New task" description="Add work directly to a project" size="lg">
+        <form id="create-task-form" wire:submit="createTask" class="space-y-4">
+            <x-ob::input label="Title" wire:model="title" placeholder="Build a new PC for the new employee" required />
+            <x-ob::textarea label="Description" wire:model="description" rows="4" placeholder="Add the context someone needs to pick this up." />
             <div class="grid gap-4 sm:grid-cols-2">
-                <x-select label="Project" wire:model="projectId" placeholder="Choose a project" :options="$projectOptions" required />
-                <x-select label="Assignee" wire:model="assigneeId" placeholder="Unassigned" placeholder-value="" :options="$userOptions" />
-                <x-select label="Type" wire:model="type" :options="$typeOptions" required />
-                <x-select label="Difficulty" wire:model="difficulty" placeholder="Not rated" placeholder-value="" :options="$difficultyOptions" />
-                <x-select label="Priority" wire:model="priority" :options="$priorityOptions" required />
-                <x-input label="Due date" wire:model="dueDate" type="date" />
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <x-button type="button" class="btn-ghost" wire:click="$set('showCreate', false)" label="Cancel" />
-                <x-button type="submit" class="btn-primary" spinner="createTask" label="Create task" />
+                <x-ob::combobox label="Project" wire:model="projectId" placeholder="Choose a project" :options="$projectOptions" />
+                <x-ob::combobox label="Assignee" wire:model="assigneeId" placeholder="Unassigned" :options="[['value' => '', 'label' => 'Unassigned'], ...$assigneeOptions]" />
+                <x-ob::select label="Type" wire:model="type" :options="$typeOptions" required />
+                <x-ob::select label="Difficulty" wire:model="difficulty" placeholder="Not rated" :options="$difficultyOptions" />
+                <x-ob::select label="Priority" wire:model="priority" :options="$priorityOptions" required />
+                <x-ob::input label="Due date" wire:model="dueDate" type="date" />
             </div>
         </form>
-    </x-modal>
+
+        <x-slot:footer>
+            <x-ob::button variant="ghost" wire:click="$set('showCreate', false)">Cancel</x-ob::button>
+            <x-ob::button type="submit" form="create-task-form" variant="primary">Create task</x-ob::button>
+        </x-slot:footer>
+    </x-ob::modal>
 </div>
