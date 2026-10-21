@@ -11,6 +11,19 @@
                         <x-app-logo sidebar :href="route('reports.index')" wire:navigate />
                     </x-slot:brand>
 
+                    <button
+                        type="button"
+                        aria-label="Search"
+                        x-on:click="$dispatch('command-palette-open')"
+                        class="flex h-9 w-full items-center gap-3 rounded-lg px-3.5 text-sm text-fg-3 transition duration-120 ease-ob hover:bg-surface-3 hover:text-fg focus-ring"
+                    >
+                        <x-ob::icon name="magnifying-glass" class="size-5" />
+                        <span x-show="!collapsed" class="flex-1 truncate text-left">
+                            Search
+                        </span>
+                        <x-ob::kbd x-show="!collapsed">⌘K</x-ob::kbd>
+                    </button>
+
                     <x-ob::sidebar.item :href="route('reports.index')" icon="inbox-stack" label="Reports" />
                     <x-ob::sidebar.item :href="route('projects.index')" icon="folder" label="Projects" />
                     <x-ob::sidebar.item :href="route('tasks.index')" icon="check-circle" label="Tasks" />
@@ -66,5 +79,6 @@
         </x-ob::app-shell>
 
         <x-ob::toasts />
+        <livewire:command-palette />
     </body>
 </html>

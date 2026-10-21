@@ -29,3 +29,8 @@ export function applyTheme(root, { appearance, accent, mode }) {
     root.dataset.mode = mode;
     root.dataset.accent = accent;
 }
+
+/** Quick-toggle order: dark → light → system → dark. Unknown values restart at dark. */
+export function nextAppearance(current) {
+    return { dark: 'light', light: 'system', system: 'dark' }[current] ?? 'dark';
+}

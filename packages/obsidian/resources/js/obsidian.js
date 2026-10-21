@@ -8,7 +8,7 @@ import obSheet from './data/sheet.js';
 import obToasts from './data/toasts.js';
 import obTooltip from './data/tooltip.js';
 import { createLayerStack } from './lib/layers.js';
-import { applyTheme, mergeTheme, resolveTheme } from './lib/theme.js';
+import { applyTheme, mergeTheme, nextAppearance, resolveTheme } from './lib/theme.js';
 
 const STORAGE_KEY = 'ob-theme';
 
@@ -75,5 +75,9 @@ export default function obsidian(Alpine) {
     Alpine.data('obSheet', obSheet);
     Alpine.data('obToasts', obToasts);
 
+    window.addEventListener('ob-theme-cycle', () => {
+        const theme = Alpine.store('obTheme');
+        theme.apply({ appearance: nextAppearance(theme.appearance) });
+    });
     window.addEventListener('ob-theme-apply', (event) => Alpine.store('obTheme').apply(event.detail));
 }

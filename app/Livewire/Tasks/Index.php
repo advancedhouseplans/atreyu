@@ -70,6 +70,13 @@ class Index extends Component
     #[Session(key: 'tasks.display')]
     public string $display = 'board';
 
+    public function mount(): void
+    {
+        if (request()->boolean('create')) {
+            $this->openCreate();
+        }
+    }
+
     public function openCreate(): void
     {
         $this->assigneeId = (string) auth()->id();
