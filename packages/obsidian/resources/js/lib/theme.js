@@ -30,6 +30,14 @@ export function applyTheme(root, { appearance, accent, mode }) {
     root.dataset.accent = accent;
 }
 
+/**
+ * Livewire's wire:navigate copies the server-rendered <html> attributes onto the page (data-mode is
+ * "dark" for system appearance), so re-apply the live theme once the swap has happened.
+ */
+export function reapplyThemeOnSwap(root, store) {
+    return (event) => event.detail.onSwap(() => applyTheme(root, store()));
+}
+
 /** Quick-toggle order: dark → light → system → dark. Unknown values restart at dark. */
 export function nextAppearance(current) {
     return { dark: 'light', light: 'system', system: 'dark' }[current] ?? 'dark';
