@@ -4,15 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5801cf9f5c74d58a8065c693993f8e1d",
+    "content-hash": "8d4c785e6b3fefe22f71f3ea1fbb55e8",
     "packages": [
         {
             "name": "ahp/obsidian",
-            "version": "dev-feature/obsidian-design-system",
+            "version": "v0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Readyforeal/ObsidianUI.git",
+                "reference": "cd37cc09c18f1e729c0ea22ebc408107090e7e11"
+            },
             "dist": {
-                "type": "path",
-                "url": "packages/obsidian",
-                "reference": "f64bd24aa135e41825eb61cf89e19f89c9024f49"
+                "type": "zip",
+                "url": "https://api.github.com/repos/Readyforeal/ObsidianUI/zipball/cd37cc09c18f1e729c0ea22ebc408107090e7e11",
+                "reference": "cd37cc09c18f1e729c0ea22ebc408107090e7e11",
+                "shasum": ""
             },
             "require": {
                 "blade-ui-kit/blade-heroicons": "^2.7",
@@ -48,10 +54,11 @@
                 "proprietary"
             ],
             "description": "Obsidian design system: Blade and Alpine component library",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "source": "https://github.com/Readyforeal/ObsidianUI/tree/v0.1.0",
+                "issues": "https://github.com/Readyforeal/ObsidianUI/issues"
+            },
+            "time": "2026-10-21T15:48:10+00:00"
         },
         {
             "name": "bacon/bacon-qr-code",
@@ -8173,7 +8180,7 @@
     "packages-dev": [
         {
             "name": "ahp/bug-companion",
-            "version": "dev-feature/obsidian-design-system",
+            "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "packages/bug-companion",
@@ -12116,8 +12123,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "ahp/bug-companion": 20,
-        "ahp/obsidian": 20
+        "ahp/bug-companion": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

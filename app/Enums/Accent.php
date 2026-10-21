@@ -16,7 +16,7 @@ enum Accent: string
         return ucfirst($this->value);
     }
 
-    /** The accent's base hex, matching packages/obsidian/resources/css/obsidian.css. */
+    /** The accent's base hex, matching vendor/ahp/obsidian/resources/css/obsidian.css. */
     public function swatch(): string
     {
         return match ($this) {

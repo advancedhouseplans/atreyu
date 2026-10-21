@@ -10,7 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "ahp/obsidian": "@dev",
+        "ahp/obsidian": "^0.1",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",
@@ -22,7 +22,7 @@
     },
     "repositories": [
         { "type": "path", "url": "packages/bug-companion", "options": { "symlink": true } },
-        { "type": "path", "url": "packages/obsidian", "options": { "symlink": true } }
+        { "type": "vcs", "url": "https://github.com/Readyforeal/ObsidianUI" }
     ],
     "require-dev": {
         "ahp/bug-companion": "@dev",
