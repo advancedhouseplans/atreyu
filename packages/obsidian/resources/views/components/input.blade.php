@@ -12,7 +12,7 @@
     use Illuminate\Support\Str;
 
     $trailingIcon = $attributes->get('icon:trailing');
-    $errorKey = $attributes->get('name') ?? $attributes->wire('model')->value();
+    $errorKey = $attributes->get('name') ?? ($attributes->wire('model')->value() ?: null);
     $id = $attributes->get('id') ?? $errorKey ?? 'ob-'.Str::lower(Str::random(8));
     $hasError = $errorKey !== null && isset($errors) && $errors->has($errorKey);
     $describedBy = ($hint || $hasError) ? $id.'-desc' : null;

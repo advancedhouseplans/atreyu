@@ -1,7 +1,7 @@
 @props(['label' => null, 'hint' => null, 'options' => []])
 
 @php
-    $errorKey = $attributes->get('name') ?? $attributes->wire('model')->value();
+    $errorKey = $attributes->get('name') ?? ($attributes->wire('model')->value() ?: null);
     $name = $errorKey ?? 'ob-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(8));
     $hasError = $errorKey !== null && isset($errors) && $errors->has($errorKey);
     $describedBy = ($hint || $hasError) ? $name.'-group-desc' : null;

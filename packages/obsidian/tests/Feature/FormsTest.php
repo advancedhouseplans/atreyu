@@ -34,3 +34,11 @@ it('keeps 44px touch targets below sm', function () {
     $this->blade('<x-ob::input clearable wire:model="q" />')->assertSee('max-sm:size-11', false);
     $this->blade('<x-ob::password wire:model="p" />')->assertSee('max-sm:size-11', false);
 });
+it('links the label to an x-model-only control', function (string $component) {
+    $html = (string) $this->blade("<x-ob::{$component} label=\"Notes\" x-model=\"notes\" />");
+
+    preg_match('/<label[^>]*\sfor="([^"]+)"/', $html, $label);
+    preg_match('/<(?:input|select|textarea)\b.*?\sid="([^"]+)"/s', $html, $control);
+
+    expect($label[1] ?? null)->not->toBeEmpty()->toBe($control[1] ?? null);
+})->with(['input', 'select', 'textarea']);
