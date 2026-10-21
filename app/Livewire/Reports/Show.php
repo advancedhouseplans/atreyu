@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\Report;
 use App\Models\ReportNote;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -123,11 +124,10 @@ class Show extends Component
 
     public function updateTitle(string $title): void
     {
-        $t = trim($title);
-        if ($t === '') {
-            return;
-        }
-        $this->report->update(['title' => $t]);
+        $validated = Validator::make(['title' => trim($title)], ['title' => ['required', 'string', 'max:255']])->validate();
+
+        $this->report->update(['title' => $validated['title']]);
+        $this->dispatch('toast', message: 'Title updated', variant: 'success');
     }
 
     public function addNote(): void

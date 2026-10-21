@@ -27,6 +27,20 @@ it('updates status', function () {
     expect($r->fresh()->status)->toBe('in_progress');
 });
 
+it('rejects a blank inline title', function () {
+    $report = Report::factory()->create(['title' => 'Original']);
+    Livewire::actingAs(User::factory()->create())->test(Show::class, ['report' => $report])
+        ->call('updateTitle', '   ')->assertHasErrors(['title' => 'required']);
+    expect($report->refresh()->title)->toBe('Original');
+});
+
+it('saves an inline title and toasts', function () {
+    $report = Report::factory()->create();
+    Livewire::actingAs(User::factory()->create())->test(Show::class, ['report' => $report])
+        ->call('updateTitle', 'Checkout 500 on submit')->assertHasNoErrors()->assertDispatched('toast');
+    expect($report->refresh()->title)->toBe('Checkout 500 on submit');
+});
+
 it('adds a note', function () {
     $u = User::factory()->create();
     $r = Report::factory()->create();
