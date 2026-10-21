@@ -5,6 +5,7 @@ let nextId = 1;
 
 export default ({ value, action, name, type = 'text', options = [] }) => {
     let host;
+    let pendingValue = null;
 
     return {
         ...createInlineEdit({
@@ -38,12 +39,20 @@ export default ({ value, action, name, type = 'text', options = [] }) => {
                     });
                 } else {
                     this.$store.obLayers.remove(this.layerId);
+
+                    // A server value that morphed in mid-edit applies once editing ends.
+                    if (pendingValue !== null) {
+                        this.value = this.draft = pendingValue;
+                        pendingValue = null;
+                    }
                 }
             });
 
             // A server re-render with a new value changes data-value; morph does not re-run x-data.
             new MutationObserver(() => {
-                if (!this.editing && !this.saving) {
+                if (this.editing || this.saving) {
+                    pendingValue = this.$root.dataset.value;
+                } else {
                     this.value = this.$root.dataset.value;
                 }
             }).observe(this.$root, { attributes: true, attributeFilter: ['data-value'] });

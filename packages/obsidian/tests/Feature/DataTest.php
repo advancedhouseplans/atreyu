@@ -1,5 +1,14 @@
 <?php
 
+it('clips the table without creating a scroll container so the head sticks to the page', function () {
+    $html = (string) $this->blade('<x-ob::table><x-ob::table.row><x-ob::table.cell>A</x-ob::table.cell></x-ob::table.row></x-ob::table>');
+
+    expect($html)->toContain('overflow-clip')
+        ->toContain('table-fixed')
+        ->not->toContain('overflow-hidden')
+        ->not->toContain('overflow-x-auto');
+});
+
 it('renders a table with a sticky glass head', function () {
     $this->blade('<x-ob::table><x-ob::table.row><x-ob::table.cell>A</x-ob::table.cell></x-ob::table.row><x-slot:head><x-ob::table.head>Name</x-ob::table.head></x-slot:head></x-ob::table>')
         ->assertSee('<thead class="glass sticky top-0', false)
@@ -25,6 +34,13 @@ it('stretches a link over the row from the first cell only', function () {
         ->toContain('after:absolute after:inset-0')
         ->toContain('wire:key="r1"')
         ->toContain('>First</a>')
+        ->and(substr_count($html, '<a '))->toBe(1);
+});
+
+it('wraps first-cell markup inside the link', function () {
+    $html = (string) $this->blade('<x-ob::table.row href="/r/1"><x-ob::table.cell mobile="primary"><span class="x">Title</span></x-ob::table.cell><x-ob::table.cell>B</x-ob::table.cell></x-ob::table.row>');
+
+    expect($html)->toContain('wire:navigate class="after:absolute after:inset-0 focus-ring"><span class="x">Title</span></a></td>')
         ->and(substr_count($html, '<a '))->toBe(1);
 });
 
@@ -76,6 +92,11 @@ it('renders a kanban card with a handle and ignored content', function () {
         ->assertSee('wire:key="card-7"', false)
         ->assertSee('sortable-chosen', false)
         ->assertSee('sortable-ghost', false);
+});
+
+it('uses a custom label for the kanban handle', function () {
+    $this->blade('<x-ob::kanban.card id="7" label="Move Fix login">Fix</x-ob::kanban.card>')
+        ->assertSee('aria-label="Move Fix login"', false);
 });
 
 it('renders an inline edit button bound to a Livewire action', function () {

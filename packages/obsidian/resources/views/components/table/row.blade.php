@@ -1,6 +1,11 @@
 @blaze
 @props(['href' => null])
 
+{{--
+    With `href`, the first cell's content is wrapped in the stretched link. That cell must not contain interactive
+    elements (links, buttons, inline-edit) and must not be mobile="hide". Other interactive cells need `relative z-10`.
+--}}
+
 @php
     $content = (string) $slot;
 
