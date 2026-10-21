@@ -2,7 +2,7 @@
 
 {{-- display:contents keeps the sticky compact bar a direct layout child of the page wrapper. --}}
 <div x-data="{ compact: false }" class="contents">
-    {{-- Zero net height (-mb-12) and opacity-toggled, so showing it never shifts the title and retriggers the observer. --}}
+    {{-- Zero net height (-mb-12) and opacity-toggled, so showing it never shifts the title and retriggers the observer. Only a title that left through the top compacts it (not one still below the fold). --}}
     <div
         aria-hidden="true"
         x-bind:inert="!compact"
@@ -14,7 +14,7 @@
     </div>
 
     <div
-        x-intersect:leave="compact = true"
+        x-intersect:leave="compact = $el.getBoundingClientRect().top < 0"
         x-intersect:enter="compact = false"
         {{ $attributes->merge(['class' => 'flex flex-wrap items-end justify-between gap-3 pb-6']) }}
     >

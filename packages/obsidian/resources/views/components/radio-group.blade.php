@@ -14,7 +14,7 @@
                 <input
                     type="radio"
                     value="{{ $option['value'] }}"
-                    {{ $attributes->except(['class', 'label', 'hint'])->merge(['name' => $name, 'class' => 'size-4 shrink-0 cursor-pointer appearance-none rounded-full border border-hairline-strong bg-surface-1 transition duration-120 ease-ob checked:border-accent checked:bg-accent checked:bg-[radial-gradient(circle,var(--color-on-accent)_32%,transparent_36%)] focus-ring in-data-invalid:border-danger disabled:opacity-50']) }}
+                    {{ $attributes->except(['class', 'label', 'hint'])->merge(['name' => $name, 'class' => 'size-4 shrink-0 cursor-pointer appearance-none rounded-full border border-fg-3 bg-surface-1 transition duration-120 ease-ob checked:border-accent checked:bg-accent checked:bg-[radial-gradient(circle,var(--color-on-accent)_32%,transparent_36%)] focus-ring in-data-invalid:border-danger disabled:opacity-50']) }}
                 >
                 <span>{{ $option['label'] }}</span>
             </label>

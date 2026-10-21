@@ -81,6 +81,11 @@ it('renders a page header with an h1 and a compact bar triggered by intersection
         ->assertSee('Act');
 });
 
+it('only compacts the page header once its title has scrolled out above the viewport', function () {
+    $this->blade('<x-ob::page-header title="Reports" />')
+        ->assertSee('x-intersect:leave="compact = $el.getBoundingClientRect().top < 0"', false);
+});
+
 it('pressed stat exposes aria-pressed and forwards attributes', function () {
     $this->blade('<x-ob::stat label="Open" value="12" selected wire:click="filter" />')
         ->assertSee('aria-pressed="true"', false)

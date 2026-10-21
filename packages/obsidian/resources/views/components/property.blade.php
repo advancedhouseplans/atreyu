@@ -8,5 +8,5 @@
         @endif
         {{ $label }}
     </div>
-    <div class="min-w-0 text-sm text-fg">{{ $slot }}</div>
+    <div class="min-w-0 text-sm text-fg wrap-break-word">{{ $slot }}</div>
 </div>

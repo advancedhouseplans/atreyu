@@ -19,7 +19,7 @@
             <span x-show="toast.variant === 'danger'" class="shrink-0 text-danger-fg"><x-ob::icon name="exclamation-circle" variant="mini" class="size-5" /></span>
             <span x-show="toast.variant === 'warning'" class="shrink-0 text-warning-fg"><x-ob::icon name="exclamation-triangle" variant="mini" class="size-5" /></span>
             <span x-show="toast.variant === 'info'" class="shrink-0 text-info-fg"><x-ob::icon name="information-circle" variant="mini" class="size-5" /></span>
-            <p class="min-w-0 flex-1" x-text="toast.message"></p>
+            <p class="min-w-0 flex-1 wrap-break-word" x-text="toast.message"></p>
             <a
                 x-show="toast.action"
                 :href="toast.action?.href"

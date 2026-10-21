@@ -21,7 +21,7 @@
     ][$color];
 @endphp
 
-<span {{ $attributes->merge(['class' => "inline-flex items-center gap-1.5 rounded-full px-2 h-5 text-xs font-medium {$colorClasses}"]) }}>
+<span {{ $attributes->merge(['class' => "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 min-h-5 text-xs font-medium {$colorClasses}"]) }}>
     @if ($dot)
         <span class="size-1.5 rounded-full {{ $dotClass }}" aria-hidden="true"></span>
     @endif
