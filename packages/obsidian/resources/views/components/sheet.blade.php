@@ -1,10 +1,11 @@
-@props(['name' => null, 'side' => 'bottom', 'title' => null])
+@props(['name' => null, 'side' => 'bottom', 'title' => null, 'label' => null])
 
 @php
     use Illuminate\Support\Str;
 
     $id = 'ob-sheet-'.Str::lower(Str::random(8));
     $isBottom = $side === 'bottom';
+    $accessibleName = $label ?? $attributes->get('aria-label');
     $modelProperty = $attributes->wire('model')->value();
     $openState = is_string($modelProperty) && $modelProperty !== '' ? "\$wire.\$entangle('".e(addslashes($modelProperty))."')" : 'false';
 
@@ -19,7 +20,7 @@
     x-data="obSheet({ name: @js($name), open: {!! $openState !!} })"
     x-on:modal-open.window="onOpenEvent($event)"
     x-on:modal-close.window="onCloseEvent($event)"
-    {{ $attributes->whereDoesntStartWith('wire:model') }}
+    {{ $attributes->whereDoesntStartWith('wire:model')->except('aria-label') }}
 >
     <div
         x-show="open"
@@ -55,10 +56,10 @@
             data-ob-sheet-panel
             role="dialog"
             aria-modal="true"
-            @if ($title) aria-labelledby="{{ $id }}-title" @endif
+            @if ($title) aria-labelledby="{{ $id }}-title" @elseif ($accessibleName) aria-label="{{ $accessibleName }}" @endif
             @if ($isBottom)
-                :style="dragY ? `transform: translateY(${dragY}px)` : null"
-                :class="dragging ? 'transition-none' : ''"
+                :style="{ transform: dragY ? `translateY(${dragY}px)` : '' }"
+                :class="settling ? 'transition-transform duration-200 ease-ob' : ''"
             @endif
             class="glass absolute flex flex-col {{ $panelClasses }}"
         >
@@ -66,8 +67,8 @@
                 <div
                     x-on:pointerdown="startDrag($event)"
                     x-on:pointermove="moveDrag($event)"
-                    x-on:pointerup="endDrag()"
-                    x-on:pointercancel="endDrag()"
+                    x-on:pointerup="endDrag($event)"
+                    x-on:pointercancel="endDrag($event)"
                     class="touch-none"
                 >
                     <div class="flex h-6 items-center justify-center">

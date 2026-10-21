@@ -41,6 +41,13 @@ export default () => ({
         return Array.from(this.menu()?.querySelectorAll(ITEMS) ?? []);
     },
 
+    /** Closing is delegated here so a consumer's own click handler on an item cannot replace it. */
+    onMenuClick(event) {
+        if (event.target.closest('[role=menuitem]:not([aria-disabled=true])')) {
+            this.close();
+        }
+    },
+
     toggle(event) {
         if (this.open) {
             this.close();

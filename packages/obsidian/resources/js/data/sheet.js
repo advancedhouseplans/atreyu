@@ -1,4 +1,4 @@
-import { shouldDismiss } from '../lib/sheet.js';
+import { releaseVelocity, shouldDismiss } from '../lib/sheet.js';
 import { overlay } from './modal.js';
 
 /**
@@ -9,6 +9,7 @@ export function sheetDrag() {
     return {
         dragY: 0,
         dragging: false,
+        settling: false,
         drag: null,
 
         startDrag(event) {
@@ -35,12 +36,13 @@ export function sheetDrag() {
             this.dragY = Math.max(0, event.clientY - this.drag.startY);
         },
 
-        endDrag() {
+        endDrag(event) {
             if (!this.dragging) {
                 return;
             }
 
-            const { velocity, height } = this.drag;
+            const { height, lastTime } = this.drag;
+            const velocity = releaseVelocity(this.drag.velocity, event.timeStamp - lastTime);
             const dismiss = shouldDismiss({ distance: this.dragY, height, velocity });
 
             this.dragging = false;
@@ -49,13 +51,19 @@ export function sheetDrag() {
             if (dismiss) {
                 this.close();
             } else {
+                // Animate back to rest; the transition class only applies while settling.
+                this.settling = true;
                 this.dragY = 0;
+                setTimeout(() => {
+                    this.settling = false;
+                }, 220);
             }
         },
 
         resetDrag() {
             this.dragY = 0;
             this.dragging = false;
+            this.settling = false;
         },
     };
 }

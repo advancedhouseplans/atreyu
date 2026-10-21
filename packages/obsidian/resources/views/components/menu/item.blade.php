@@ -5,7 +5,7 @@
     $classes = 'flex w-full items-center gap-2.5 h-9 max-sm:h-11 rounded-lg px-2.5 text-left text-sm transition duration-120 ease-ob hover:bg-surface-3 focus:bg-surface-3 focus-ring disabled:opacity-50 aria-disabled:opacity-50 '
         .($variant === 'danger' ? 'text-danger-fg' : 'text-fg');
 
-    $rootAttributes = $attributes->merge(['role' => 'menuitem', 'tabindex' => '-1', 'x-on:click' => 'close()', 'class' => $classes]);
+    $rootAttributes = $attributes->merge(['role' => 'menuitem', 'tabindex' => '-1', 'class' => $classes]);
 
     if ($href !== null) {
         $rootAttributes = $rootAttributes->merge(['href' => $href]);

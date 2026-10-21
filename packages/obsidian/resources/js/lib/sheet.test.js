@@ -1,5 +1,5 @@
 import { expect, test } from 'vite-plus/test';
-import { shouldDismiss } from './sheet.js';
+import { releaseVelocity, shouldDismiss } from './sheet.js';
 
 test.each([
     [100, 400, 0, false],
@@ -8,3 +8,8 @@ test.each([
     [-50, 400, 2, false],
 ])('shouldDismiss(%i, %i, %f) is %s', (distance, height, velocity, expected) =>
     expect(shouldDismiss({ distance, height, velocity })).toBe(expected));
+
+test('release velocity goes stale after a pause', () => {
+    expect(releaseVelocity(0.8, 100)).toBe(0.8);
+    expect(releaseVelocity(0.8, 101)).toBe(0);
+});

@@ -72,3 +72,30 @@ it('renders a polite notifications region', function () {
         ->assertSee('aria-label="Notifications"', false)
         ->assertSee('x-on:toast.window', false);
 });
+
+it('closes the menu through a delegated handler so item click handlers survive', function () {
+    $html = (string) $this->blade('<x-ob::dropdown><x-slot:trigger><button>Go</button></x-slot:trigger><x-ob::menu.item x-on:click="$dispatch(\'modal-open\', {name: \'x\'})">Open</x-ob::menu.item></x-ob::dropdown>');
+
+    expect($html)
+        ->toContain('x-on:click="onMenuClick($event)"')
+        ->toContain('x-on:click="$dispatch(')
+        ->not->toContain('x-on:click="close()" role="menuitem"');
+    expect(strpos($html, 'onMenuClick($event)'))->toBeLessThan(strpos($html, 'role="menuitem"'));
+});
+
+it('renders the dropdown slot exactly once', function () {
+    $html = (string) $this->blade('<x-ob::dropdown><x-slot:trigger><button>Go</button></x-slot:trigger><x-ob::menu.item>UniqueItemLabel</x-ob::menu.item></x-ob::dropdown>');
+
+    expect(substr_count($html, 'UniqueItemLabel'))->toBe(1)
+        ->and(substr_count($html, 'role="menu"'))->toBe(1);
+});
+
+it('gives untitled dialogs an accessible name', function () {
+    $this->blade('<x-ob::modal label="Quick add">Body</x-ob::modal>')
+        ->assertSee('aria-label="Quick add"', false)
+        ->assertDontSee('aria-labelledby', false);
+
+    $this->blade('<x-ob::sheet aria-label="Filters">Body</x-ob::sheet>')
+        ->assertSee('aria-label="Filters"', false)
+        ->assertDontSee('aria-labelledby', false);
+});

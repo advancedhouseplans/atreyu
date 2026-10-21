@@ -1,9 +1,10 @@
-@props(['name' => null, 'title' => null, 'description' => null, 'size' => 'md', 'footer' => null])
+@props(['name' => null, 'title' => null, 'description' => null, 'size' => 'md', 'footer' => null, 'label' => null])
 
 @php
     use Illuminate\Support\Str;
 
     $id = 'ob-modal-'.Str::lower(Str::random(8));
+    $accessibleName = $label ?? $attributes->get('aria-label');
     $widthClass = ['sm' => 'sm:max-w-sm', 'md' => 'sm:max-w-lg', 'lg' => 'sm:max-w-2xl'][$size];
     $modelProperty = $attributes->wire('model')->value();
     $openState = is_string($modelProperty) && $modelProperty !== '' ? "\$wire.\$entangle('".e(addslashes($modelProperty))."')" : 'false';
@@ -13,7 +14,7 @@
     x-data="obModal({ name: @js($name), open: {!! $openState !!} })"
     x-on:modal-open.window="onOpenEvent($event)"
     x-on:modal-close.window="onCloseEvent($event)"
-    {{ $attributes->whereDoesntStartWith('wire:model') }}
+    {{ $attributes->whereDoesntStartWith('wire:model')->except('aria-label') }}
 >
     <div
         x-show="open"
@@ -48,7 +49,7 @@
             data-ob-motion
             role="dialog"
             aria-modal="true"
-            @if ($title) aria-labelledby="{{ $id }}-title" @endif
+            @if ($title) aria-labelledby="{{ $id }}-title" @elseif ($accessibleName) aria-label="{{ $accessibleName }}" @endif
             @if ($description) aria-describedby="{{ $id }}-description" @endif
             class="glass relative flex max-h-[90dvh] w-full flex-col rounded-t-[20px] sm:rounded-xl {{ $widthClass }}"
         >
