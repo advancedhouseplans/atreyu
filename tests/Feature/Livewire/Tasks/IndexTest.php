@@ -113,3 +113,12 @@ it('renders board card details for an urgent assigned task', function () {
         ->assertSee('Urgent')
         ->assertSee('Move Fix the VPN');
 });
+
+it('escapes a task title once in the board handle label', function () {
+    $user = User::factory()->create();
+    Task::factory()->create(['title' => "O'Brien & Co"]);
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->set('scope', 'all')
+        ->assertSeeHtml('aria-label="Move O&#039;Brien &amp; Co"');
+});

@@ -70,3 +70,14 @@ test('commit after cancel does nothing', async () => {
     await e.commit();
     expect(save).not.toHaveBeenCalled();
 });
+
+test('a rejected save shows a generic error and keeps the field open', async () => {
+    const e = createInlineEdit({ value: 'A', save: vi.fn().mockRejectedValue(new Error('419')) });
+    e.start();
+    e.draft = 'x';
+    await e.commit();
+    expect(e.editing).toBe(true);
+    expect(e.saving).toBe(false);
+    expect(e.error).toBe("Couldn't save. Try again.");
+    expect(e.value).toBe('A');
+});

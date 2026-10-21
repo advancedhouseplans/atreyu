@@ -72,7 +72,7 @@
                 @php($laneTasks = $boardTasks->get($laneStatus->value, collect()))
                 <x-ob::kanban.column :id="$laneStatus->value" :title="$laneStatus->label()" :count="$laneTasks->count()" sort="moveTask" group="tasks" wire:key="lane-{{ $laneStatus->value }}">
                     @foreach ($laneTasks as $task)
-                        <x-ob::kanban.card :id="$task->id" label="Move {{ $task->title }}" wire:key="board-task-{{ $task->id }}">
+                        <x-ob::kanban.card :id="$task->id" :label="'Move '.$task->title" wire:key="board-task-{{ $task->id }}">
                             <x-ob::badge :color="$typeColor($task->type)">{{ $task->type->label() }}</x-ob::badge>
                             <a href="{{ route('tasks.show', $task) }}" wire:navigate class="mt-2 block text-sm font-medium leading-snug hover:text-accent-fg focus-ring rounded">{{ $task->title }}</a>
                             @if ($task->description)

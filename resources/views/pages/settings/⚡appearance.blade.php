@@ -77,7 +77,7 @@ new #[Title('Appearance settings')] class extends Component {
                     x-on:change="$store.obTheme.apply({ appearance: $event.target.value }); $wire.selectAppearance($event.target.value)"
                 />
                 @error('appearance')
-                    <p class="text-sm text-danger">{{ $message }}</p>
+                    <p class="text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </x-ob::section>
 
@@ -102,7 +102,7 @@ new #[Title('Appearance settings')] class extends Component {
                     @endforeach
                 </div>
                 @error('accent')
-                    <p class="text-sm text-danger">{{ $message }}</p>
+                    <p class="text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </x-ob::section>
         </div>

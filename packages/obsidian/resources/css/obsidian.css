@@ -244,9 +244,15 @@
         [data-ob-motion] {
             transition-property: opacity !important;
             transition-duration: var(--ob-dur-fast) !important;
-            transform: none !important;
+            /* Class-driven offsets (translate/scale) become pure fades; inline drag `transform`s keep tracking the pointer. */
             translate: none !important;
             scale: none !important;
+        }
+
+        /* Without its slide-away offset the hidden dock fades out instead. */
+        [data-ob-motion][data-ob-hidden] {
+            opacity: 0;
+            pointer-events: none;
         }
     }
 }

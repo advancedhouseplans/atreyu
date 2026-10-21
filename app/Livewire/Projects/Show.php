@@ -65,6 +65,13 @@ class Show extends Component
         $this->installation($installationId)->update(['revoked_at' => now()]);
     }
 
+    public function updatedShowCredential(bool $value): void
+    {
+        if (! $value) {
+            $this->clearCredential();
+        }
+    }
+
     public function clearCredential(): void
     {
         $this->issuedCredential = '';

@@ -35,6 +35,19 @@ it('creates an installation and reveals its credential once', function () {
         ->assertSet('showCredential', false);
 });
 
+it('clears the issued credential when the modal is dismissed', function () {
+    $project = Project::factory()->create();
+
+    Livewire::actingAs(User::factory()->create())
+        ->test(Show::class, ['project' => $project])
+        ->set('name', "O'Brien & Co")
+        ->call('createInstallation')
+        ->assertSeeHtml('Install O&#039;Brien &amp; Co')
+        ->set('showCredential', false)
+        ->assertSet('issuedCredential', '')
+        ->assertSet('issuedName', '');
+});
+
 it('rotates and revokes a project installation', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create();

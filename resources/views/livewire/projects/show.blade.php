@@ -82,7 +82,7 @@
         </x-slot:footer>
     </x-ob::modal>
 
-    <x-ob::modal wire:model="showCredential" title="Install {{ $issuedName }}" description="This credential is shown only now">
+    <x-ob::modal wire:model.live="showCredential" :title="'Install '.$issuedName" description="This credential is shown only now">
         <div class="mb-4 flex items-start gap-3 rounded-lg bg-warning-soft p-3 text-sm text-warning-fg">
             <x-ob::icon name="exclamation-triangle" class="size-5 shrink-0" />
             <span>Copy this before closing. Atreyu stores only an encrypted copy and will not display the credential again.</span>

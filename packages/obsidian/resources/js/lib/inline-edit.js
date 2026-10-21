@@ -1,7 +1,7 @@
 const normalize = (x) => String(x ?? '').trim();
 
 /**
- * Edit-in-place state machine. `save(draft)` resolves to an error message, or null on success.
+ * Edit-in-place state machine. `save(draft)` resolves to an error message, or null on success; a rejection becomes a generic error.
  * Methods use `this` so the object stays reactive when Alpine spreads it into a component.
  */
 export function createInlineEdit({ value, save }) {
@@ -40,6 +40,8 @@ export function createInlineEdit({ value, save }) {
 
             try {
                 this.error = await save(normalize(this.draft) === '' ? null : this.draft);
+            } catch {
+                this.error = "Couldn't save. Try again.";
             } finally {
                 this.saving = false;
             }
