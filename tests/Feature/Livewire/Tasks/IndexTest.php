@@ -85,6 +85,28 @@ it('searches active tasks and keeps archived work out of the default view', func
         ->assertSee($archived->title);
 });
 
+it('clears individual task filters and all filters', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->create(['name' => 'Clara']);
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->set('display', 'list')
+        ->set('scope', 'mine')
+        ->set('status', TaskStatus::Review->value)
+        ->set('project', (string) $project->id)
+        ->set('priorityFilter', TaskPriority::High->value)
+        ->set('visibility', 'archived')
+        ->assertSee('Clara')
+        ->assertSee('Archived')
+        ->call('clearFilter', 'project')
+        ->assertSet('project', '')
+        ->call('clearFilters')
+        ->assertSet('scope', 'all')
+        ->assertSet('status', '')
+        ->assertSet('priorityFilter', '')
+        ->assertSet('visibility', 'active');
+});
+
 it('defaults a quick-created task to the current user', function () {
     $user = User::factory()->create();
 
@@ -121,4 +143,17 @@ it('escapes a task title once in the board handle label', function () {
     Livewire::actingAs($user)->test(Index::class)
         ->set('scope', 'all')
         ->assertSeeHtml('aria-label="Move O&#039;Brien &amp; Co"');
+});
+
+it('keeps subtasks nested instead of duplicating them on the main task board', function () {
+    $parent = Task::factory()->create(['title' => 'Prepare workstation']);
+    Task::factory()->create([
+        'parent_id' => $parent->id,
+        'project_id' => $parent->project_id,
+        'title' => 'Install updates',
+    ]);
+
+    Livewire::actingAs(User::factory()->create())->test(Index::class)
+        ->assertSee('Prepare workstation')
+        ->assertDontSee('Install updates');
 });

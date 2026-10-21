@@ -15,13 +15,21 @@ it('creates a Report with array casts', function () {
     expect($r->client_events[0]['type'])->toBe('error');
 });
 
-it('relates notes and attachments and assignee', function () {
+it('relates notes and attachments and casts its archive timestamp', function () {
     $u = User::factory()->create();
-    $r = Report::factory()->for($u, 'assignee')->create();
+    $r = Report::factory()->create(['archived_at' => now()]);
     ReportNote::factory()->for($r)->for($u, 'author')->create(['body' => 'hi']);
     ReportAttachment::factory()->for($r)->create();
 
     expect($r->fresh()->notes)->toHaveCount(1)
         ->and($r->fresh()->attachments)->toHaveCount(1)
-        ->and($r->fresh()->assignee->id)->toBe($u->id);
+        ->and($r->fresh()->archived_at)->not->toBeNull();
+});
+
+it('groups report occurrences beneath a canonical report', function () {
+    $canonical = Report::factory()->create();
+    $occurrence = Report::factory()->create(['occurrence_parent_id' => $canonical->id]);
+
+    expect($canonical->fresh()->occurrences)->toHaveCount(1)
+        ->and($occurrence->canonicalReport()->is($canonical))->toBeTrue();
 });

@@ -15,7 +15,7 @@ class CreateReporterInstallation
     {
         $keyId = 'atry_'.Str::lower((string) Str::ulid());
         $secret = ReporterCredential::generateSecret();
-        $installation = $project->reporterInstallations()->create([
+        $installation = $project->connection()->create([
             'created_by' => $actor->id,
             'name' => $name,
             'environment' => $environment,

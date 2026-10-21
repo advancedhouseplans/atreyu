@@ -3,6 +3,7 @@
 namespace App\Livewire\Tasks;
 
 use App\Actions\MoveTask;
+use App\Actions\NotifyTaskAssignment;
 use App\Actions\RecordTaskActivity;
 use App\Actions\UpdateTaskDetails;
 use App\Enums\TaskDifficulty;
@@ -25,6 +26,8 @@ class Show extends Component
     public Task $task;
 
     public string $newComment = '';
+
+    public string $newSubtaskTitle = '';
 
     public bool $showEdit = false;
 
@@ -155,6 +158,42 @@ class Show extends Component
         $this->refreshTask();
     }
 
+    public function addSubtask(): void
+    {
+        abort_if($this->task->parent_id !== null, 422);
+
+        $validated = $this->validate([
+            'newSubtaskTitle' => ['required', 'string', 'max:255'],
+        ]);
+
+        $subtask = Task::create([
+            'project_id' => $this->task->project_id,
+            'parent_id' => $this->task->id,
+            'assignee_id' => $this->task->assignee_id,
+            'creator_id' => auth()->id(),
+            'type' => $this->task->type,
+            'status' => TaskStatus::Backlog,
+            'position' => Task::nextPosition(TaskStatus::Backlog, $this->task->id),
+            'priority' => $this->task->priority,
+            'title' => $validated['newSubtaskTitle'],
+        ]);
+
+        app(RecordTaskActivity::class)->handle($subtask, 'created', auth()->user());
+        app(NotifyTaskAssignment::class)->handle($subtask, auth()->user());
+
+        $this->newSubtaskTitle = '';
+        $this->refreshTask();
+    }
+
+    public function toggleSubtask(int $subtaskId, MoveTask $moveTask): void
+    {
+        $subtask = $this->task->subtasks()->findOrFail($subtaskId);
+        $destination = $subtask->status === TaskStatus::Done ? TaskStatus::Backlog : TaskStatus::Done;
+
+        $moveTask->handle($subtask, $destination, actor: auth()->user());
+        $this->refreshTask();
+    }
+
     public function render(): View
     {
         return view('livewire.tasks.show', [
@@ -174,7 +213,10 @@ class Show extends Component
 
     private function refreshTask(): void
     {
-        $this->task->refresh()->load(['project', 'assignee', 'creator', 'report', 'comments.author', 'activities.actor']);
+        $this->task->refresh()->load([
+            'project', 'parent', 'assignee', 'creator', 'report', 'subtasks.assignee',
+            'comments.author', 'activities.actor',
+        ]);
     }
 
     private function fillEditForm(): void

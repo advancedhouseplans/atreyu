@@ -5,8 +5,11 @@
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\ReporterInstallation;
+use App\Models\User;
+use App\Notifications\ReportReceived;
 use App\Services\SourceContextFetcher;
 use Illuminate\Http\Testing\File;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -32,6 +35,8 @@ it('rejects unauthenticated submission', function () {
 });
 
 it('creates a report from valid submission', function () {
+    Notification::fake();
+    $recipient = User::factory()->create();
     $firstDebugId = '11111111-1111-4111-8111-111111111111';
     $secondDebugId = '22222222-2222-4222-8222-222222222222';
     $this->mock(SourceContextFetcher::class)
@@ -72,6 +77,7 @@ it('creates a report from valid submission', function () {
             ['id' => $secondDebugId, 'context' => null],
         ])
         ->and($r->attachments)->toHaveCount(2);
+    Notification::assertSentTo($recipient, ReportReceived::class);
 });
 
 it('rate-limits after 10 submissions', function () {
@@ -118,4 +124,35 @@ it('attributes a report to its registered installation and project', function ()
     expect($report->source_slug)->toBe('clara')
         ->and($report->reporter_installation_id)->toBe($installation->id)
         ->and($report->reporter_email)->toBeNull();
+});
+
+it('groups matching bugs as occurrences while keeping feature requests independent', function () {
+    $this->mock(SourceContextFetcher::class)->shouldReceive('fetch')->times(4)->andReturn([]);
+    $auth = ['Authorization' => bearer()];
+
+    foreach (['https://ahp.test/plans/123', 'https://ahp.test/plans/456'] as $url) {
+        $this->withHeaders($auth)->post('/api/reports', [
+            'title' => 'Save button crashes for plan 123',
+            'description' => 'It broke',
+            'type' => 'bug',
+            'severity' => 'high',
+            'metadata' => json_encode(['url' => $url]),
+        ])->assertCreated();
+    }
+
+    foreach (range(1, 2) as $index) {
+        $this->withHeaders($auth)->post('/api/reports', [
+            'title' => 'Add a new export',
+            'description' => 'Feature idea '.$index,
+            'type' => 'feature',
+            'severity' => 'low',
+            'metadata' => json_encode(['url' => 'https://ahp.test/plans']),
+        ])->assertCreated();
+    }
+
+    $bugReports = Report::where('type', 'bug')->orderBy('id')->get();
+    expect($bugReports)->toHaveCount(2)
+        ->and($bugReports[0]->occurrence_parent_id)->toBeNull()
+        ->and($bugReports[1]->occurrence_parent_id)->toBe($bugReports[0]->id)
+        ->and(Report::where('type', 'feature')->whereNull('occurrence_parent_id')->count())->toBe(2);
 });

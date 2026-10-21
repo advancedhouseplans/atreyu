@@ -8,6 +8,8 @@ use App\Enums\TaskType;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
+use App\Notifications\TaskAssigned;
+use Illuminate\Support\Facades\Notification;
 
 it('promotes a report into one linked task and source project', function () {
     $user = User::factory()->create();
@@ -34,10 +36,7 @@ it('promotes a report into one linked task and source project', function () {
         'creator_id' => $user->id,
         'title' => 'Add plan comparison',
     ]);
-    $this->assertDatabaseHas('reports', [
-        'id' => $report->id,
-        'status' => 'in_progress',
-    ]);
+    expect($report->refresh()->archived_at)->toBeNull();
     $this->assertDatabaseHas('task_activities', [
         'task_id' => $firstTask->id,
         'actor_id' => $user->id,
@@ -46,6 +45,7 @@ it('promotes a report into one linked task and source project', function () {
 });
 
 it('uses the project, owner, type, difficulty, and title chosen during triage', function () {
+    Notification::fake();
     $actor = User::factory()->create();
     $assignee = User::factory()->create();
     $project = Project::factory()->create();
@@ -71,4 +71,5 @@ it('uses the project, owner, type, difficulty, and title chosen during triage', 
         ->and($task->difficulty)->toBe(TaskDifficulty::Four)
         ->and($task->title)->toBe('Checkout fails after login');
     $this->assertDatabaseMissing('projects', ['slug' => 'another-app']);
+    Notification::assertSentTo($assignee, TaskAssigned::class);
 });

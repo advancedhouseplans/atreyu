@@ -3,13 +3,7 @@
 ])
 
 <a {{ $attributes->class(['flex items-center gap-3']) }}>
-    <span @class([
-        'grid shrink-0 place-items-center bg-accent text-on-accent',
-        'size-8 rounded-lg' => $sidebar,
-        'size-10 rounded-xl' => ! $sidebar,
-    ])>
-        <x-app-logo-icon @class(['size-5' => $sidebar, 'size-7' => ! $sidebar]) />
-    </span>
+    <x-app-logo-icon @class(['shrink-0 text-black dark:text-white', 'size-8' => $sidebar, 'size-10' => ! $sidebar]) />
     <span class="leading-none">
         <span class="block text-lg font-semibold tracking-tight text-fg">Atreyu</span>
         @unless ($sidebar)

@@ -12,7 +12,7 @@ use Livewire\Component;
 /**
  * Global search for the app shell. It is only mounted inside the authenticated
  * layout (route-group `auth` middleware) and every user may see every record,
- * so the only scoping is archived-task exclusion.
+ * so the only scoping is archived-item exclusion.
  */
 class CommandPalette extends Component
 {
@@ -43,6 +43,8 @@ class CommandPalette extends Component
     private function reports(string $search): Collection
     {
         return Report::query()
+            ->whereNull('occurrence_parent_id')
+            ->whereNull('archived_at')
             ->where('title', 'like', "%{$search}%")
             ->latest()
             ->limit(self::RESULT_LIMIT)

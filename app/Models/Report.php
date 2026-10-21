@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int|null $occurrence_parent_id
+ * @property string|null $fingerprint
  * @property string $source_slug
  * @property string $environment
  * @property string|null $reporter_email
@@ -18,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $type
  * @property string $severity
  * @property string $url
- * @property int|null $assignee_id
+ * @property Carbon|null $archived_at
  */
 class Report extends Model
 {
@@ -32,6 +35,7 @@ class Report extends Model
         'client_events' => 'array',
         'network_log' => 'array',
         'dpr' => 'float',
+        'archived_at' => 'datetime',
     ];
 
     /** @return HasMany<ReportNote, $this> */
@@ -46,10 +50,21 @@ class Report extends Model
         return $this->hasMany(ReportAttachment::class);
     }
 
-    /** @return BelongsTo<User, $this> */
-    public function assignee(): BelongsTo
+    /** @return BelongsTo<Report, $this> */
+    public function canonical(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assignee_id');
+        return $this->belongsTo(self::class, 'occurrence_parent_id');
+    }
+
+    /** @return HasMany<Report, $this> */
+    public function occurrences(): HasMany
+    {
+        return $this->hasMany(self::class, 'occurrence_parent_id')->latest();
+    }
+
+    public function canonicalReport(): self
+    {
+        return $this->canonical()->first() ?? $this;
     }
 
     /** @return BelongsTo<ReporterInstallation, $this> */

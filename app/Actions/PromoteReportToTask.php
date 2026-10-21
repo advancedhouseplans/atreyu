@@ -24,6 +24,8 @@ class PromoteReportToTask
         ?TaskDifficulty $difficulty = null,
         ?string $title = null,
     ): Task {
+        $report = $report->canonicalReport();
+
         return DB::transaction(function () use ($report, $actor, $project, $assignee, $type, $difficulty, $title): Task {
             $lockedReport = Report::query()->lockForUpdate()->findOrFail($report->id);
             $existingTask = $lockedReport->task()->first();
@@ -59,11 +61,10 @@ class PromoteReportToTask
                 'description' => $lockedReport->description,
             ]);
 
-            $lockedReport->update(['status' => 'in_progress']);
-            $report->setRawAttributes($lockedReport->getAttributes(), true);
             app(RecordTaskActivity::class)->handle($task, 'promoted', $actor, [
                 'report_id' => $lockedReport->id,
             ]);
+            app(NotifyTaskAssignment::class)->handle($task, $actor);
 
             return $task->load(['project', 'assignee', 'report']);
         });

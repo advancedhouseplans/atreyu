@@ -87,10 +87,13 @@ test('settings nav keeps its active item after a livewire action', function () {
 
     // Livewire::test() reports a synthetic path, so replay a real update request from the rendered page's snapshot.
     $page = $this->get(route('profile.edit'))->assertOk()->getContent();
-    preg_match('/wire:snapshot="([^"]+)"/', $page, $matches);
+    preg_match_all('/wire:snapshot="([^"]+)"/', $page, $matches);
+    $snapshot = collect($matches[1])
+        ->map(fn (string $snapshot): string => html_entity_decode($snapshot))
+        ->first(fn (string $snapshot): bool => data_get(json_decode($snapshot, true), 'memo.name') !== 'notifications.unread-indicator');
 
     $update = $this->postJson(route('default-livewire.update'), ['components' => [[
-        'snapshot' => html_entity_decode($matches[1]),
+        'snapshot' => $snapshot,
         'updates' => [],
         'calls' => [['path' => '', 'method' => '$refresh', 'params' => []]],
     ]]], ['X-Livewire' => 'true'])->assertOk();

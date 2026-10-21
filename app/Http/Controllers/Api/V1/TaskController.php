@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\MoveTask;
+use App\Actions\NotifyTaskAssignment;
 use App\Actions\RecordTaskActivity;
 use App\Actions\UpdateTaskDetails;
 use App\Enums\TaskPriority;
@@ -16,6 +17,7 @@ use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class TaskController extends Controller
 {
@@ -26,7 +28,7 @@ class TaskController extends Controller
 
         $tasks = Task::query()
             ->with(['project', 'assignee', 'creator', 'report'])
-            ->withCount('comments')
+            ->withCount(['comments', 'subtasks'])
             ->when($request->validated('scope') === 'mine', fn ($query) => $query->whereBelongsTo($request->user(), 'assignee'))
             ->when($request->validated('scope') === 'unassigned', fn ($query) => $query->whereNull('assignee_id'))
             ->when($request->validated('project_id'), fn ($query, $projectId) => $query->where('project_id', $projectId))
@@ -69,15 +71,23 @@ class TaskController extends Controller
     {
         $validated = $request->validated();
         $status = TaskStatus::tryFrom($validated['status'] ?? '') ?? TaskStatus::Backlog;
+        $parent = filled($validated['parent_id'] ?? null)
+            ? Task::query()->whereKey((int) $validated['parent_id'])->firstOrFail()
+            : null;
+
+        if ($parent && $parent->project_id !== (int) $validated['project_id']) {
+            throw ValidationException::withMessages(['parent_id' => 'The subtask must belong to the same project as its parent.']);
+        }
 
         $task = Task::create([
             ...$validated,
             'creator_id' => $request->user()->id,
             'priority' => $validated['priority'] ?? TaskPriority::Normal,
             'status' => $status,
-            'position' => Task::nextPosition($status),
+            'position' => Task::nextPosition($status, $parent?->id),
         ]);
         app(RecordTaskActivity::class)->handle($task, 'created', $request->user());
+        app(NotifyTaskAssignment::class)->handle($task, $request->user());
 
         return (new TaskResource($this->loadTask($task)))
             ->response()
@@ -121,6 +131,6 @@ class TaskController extends Controller
             $relationships[] = 'activities.actor';
         }
 
-        return $task->load($relationships)->loadCount('comments');
+        return $task->load($relationships)->loadCount(['comments', 'subtasks']);
     }
 }

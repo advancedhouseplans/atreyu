@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $project_id
+ * @property int|null $parent_id
  * @property int|null $report_id
  * @property int|null $assignee_id
  * @property int|null $creator_id
@@ -39,7 +40,7 @@ class Task extends Model
     use HasFactory;
 
     protected $fillable = [
-        'project_id', 'report_id', 'assignee_id', 'creator_id', 'type',
+        'project_id', 'parent_id', 'report_id', 'assignee_id', 'creator_id', 'type',
         'status', 'position', 'difficulty', 'priority', 'due_date', 'title', 'description', 'archived_at',
     ];
 
@@ -55,9 +56,12 @@ class Task extends Model
         ];
     }
 
-    public static function nextPosition(TaskStatus $status): int
+    public static function nextPosition(TaskStatus $status, ?int $parentId = null): int
     {
-        $lastPosition = static::where('status', $status)->whereNull('archived_at')->max('position');
+        $lastPosition = static::where('status', $status)
+            ->where('parent_id', $parentId)
+            ->whereNull('archived_at')
+            ->max('position');
 
         return $lastPosition === null ? 0 : $lastPosition + 1;
     }
@@ -66,6 +70,18 @@ class Task extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /** @return BelongsTo<Task, $this> */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /** @return HasMany<Task, $this> */
+    public function subtasks(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id')->orderBy('position')->orderBy('id');
     }
 
     /** @return BelongsTo<Report, $this> */

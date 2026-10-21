@@ -1,5 +1,9 @@
-<svg {{ $attributes }} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M16 2.75 27 7.5v7.75c0 6.7-4.7 11.98-11 14-6.3-2.02-11-7.3-11-14V7.5l11-4.75Z" fill="currentColor" opacity=".16"/>
-    <path d="M16 2.75 27 7.5v7.75c0 6.7-4.7 11.98-11 14-6.3-2.02-11-7.3-11-14V7.5l11-4.75Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-    <path d="m10.5 21 5.5-12 5.5 12M12.4 17h7.2" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+<svg {{ $attributes }} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g stroke="currentColor" stroke-width="28">
+        <circle cx="256" cy="256" r="220" />
+        <circle cx="202" cy="202" r="136" />
+        <circle cx="310" cy="202" r="136" />
+        <circle cx="202" cy="310" r="136" />
+        <circle cx="310" cy="310" r="136" />
+    </g>
 </svg>

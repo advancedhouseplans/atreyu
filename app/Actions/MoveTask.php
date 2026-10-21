@@ -13,8 +13,10 @@ class MoveTask
     {
         DB::transaction(function () use ($task, $destinationStatus, $position, $actor): void {
             $sourceStatus = $task->status;
+            $parentId = $task->parent_id;
             $destinationTaskIds = Task::query()
                 ->where('status', $destinationStatus)
+                ->where('parent_id', $parentId)
                 ->whereNull('archived_at')
                 ->whereKeyNot($task->id)
                 ->orderBy('position')
@@ -33,10 +35,16 @@ class MoveTask
             }
 
             if ($sourceStatus !== $destinationStatus) {
-                $this->reorder($sourceStatus);
+                $this->reorder($sourceStatus, $parentId);
             }
 
             $task->refresh();
+
+            if ($task->report_id) {
+                $task->report()->update([
+                    'archived_at' => $destinationStatus === TaskStatus::Done ? now() : null,
+                ]);
+            }
 
             if ($sourceStatus !== $destinationStatus) {
                 app(RecordTaskActivity::class)->handle($task, 'status_changed', $actor, [
@@ -49,10 +57,11 @@ class MoveTask
         });
     }
 
-    private function reorder(TaskStatus $status): void
+    private function reorder(TaskStatus $status, ?int $parentId): void
     {
         Task::query()
             ->where('status', $status)
+            ->where('parent_id', $parentId)
             ->whereNull('archived_at')
             ->orderBy('position')
             ->orderBy('id')

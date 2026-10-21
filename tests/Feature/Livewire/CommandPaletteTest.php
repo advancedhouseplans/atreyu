@@ -36,6 +36,14 @@ it('excludes archived tasks', function () {
         ->assertDontSee('Old checkout');
 });
 
+it('excludes archived reports', function () {
+    Report::factory()->create(['title' => 'Old checkout report', 'archived_at' => now()]);
+
+    Livewire::actingAs(User::factory()->create())->test(CommandPalette::class)
+        ->set('query', 'checkout')
+        ->assertDontSee('Old checkout report');
+});
+
 it('does not query for one character', function () {
     Task::factory()->create(['title' => 'C task']);
 

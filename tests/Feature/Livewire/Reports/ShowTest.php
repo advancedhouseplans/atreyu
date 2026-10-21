@@ -16,17 +16,6 @@ it('renders header and meta', function () {
         ->assertSee('Chrome');
 });
 
-it('updates status', function () {
-    $u = User::factory()->create();
-    $r = Report::factory()->create(['status' => 'new']);
-
-    Livewire::actingAs($u)->test(Show::class, ['report' => $r])
-        ->call('updateStatus', 'in_progress')
-        ->assertSet('report.status', 'in_progress');
-
-    expect($r->fresh()->status)->toBe('in_progress');
-});
-
 it('rejects a blank inline title', function () {
     $report = Report::factory()->create(['title' => 'Original']);
     Livewire::actingAs(User::factory()->create())->test(Show::class, ['report' => $report])
@@ -93,17 +82,20 @@ it('creates a source project when triage finds no existing match', function () {
     ]);
 });
 
-it('dismisses a report without creating a task', function () {
+it('archives and restores a report without creating a task', function () {
     $user = User::factory()->create();
-    $report = Report::factory()->create(['status' => 'new']);
+    $report = Report::factory()->create();
 
     Livewire::actingAs($user)->test(Show::class, ['report' => $report])
         ->call('openTriage')
-        ->call('dismissReport')
-        ->assertSet('report.status', 'wontfix')
-        ->assertSet('showTriage', false);
+        ->call('archiveReport')
+        ->assertSet('showTriage', false)
+        ->assertSet('report.archived_at', fn ($value) => $value !== null)
+        ->call('restoreReport')
+        ->assertSet('report.archived_at', null);
 
-    expect($report->fresh()->task)->toBeNull();
+    expect($report->fresh()->task)->toBeNull()
+        ->and($report->archived_at)->toBeNull();
 });
 
 it('rejects triage values that do not belong to known records', function () {
@@ -126,11 +118,4 @@ it('treats a cleared inline title as blank', function () {
     Livewire::actingAs(User::factory()->create())->test(Show::class, ['report' => $report])
         ->call('updateTitle', null)->assertHasErrors(['title' => 'required']);
     expect($report->refresh()->title)->toBe('Original');
-});
-
-it('aborts with 422 when the inline status is cleared', function () {
-    $report = Report::factory()->create(['status' => 'new']);
-    Livewire::actingAs(User::factory()->create())->test(Show::class, ['report' => $report])
-        ->call('updateStatus', null)->assertStatus(422);
-    expect($report->refresh()->status)->toBe('new');
 });

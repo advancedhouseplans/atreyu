@@ -7,10 +7,14 @@ use App\Http\Requests\StoreReportRequest;
 use App\Models\Report;
 use App\Models\ReportAttachment;
 use App\Models\ReporterInstallation;
+use App\Models\User;
+use App\Notifications\ReportReceived;
 use App\Services\SourceContextFetcher;
+use App\Support\ReportFingerprint;
 use App\Support\UserAgentParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -31,17 +35,35 @@ class ReportsController extends Controller
         $meta = json_decode((string) $request->input('metadata'), true) ?: [];
 
         $ua = UserAgentParser::parse((string) ($meta['user_agent'] ?? ''));
+        $sourceSlug = $token['source_slug'];
+        $environment = $token['env'] ?? 'production';
+        $fingerprint = ReportFingerprint::make(
+            source: $sourceSlug,
+            environment: $environment,
+            type: (string) $request->input('type'),
+            title: (string) $request->input('title'),
+            metadata: $meta,
+        );
+        $canonical = $fingerprint
+            ? Report::query()
+                ->whereNull('occurrence_parent_id')
+                ->where('source_slug', $sourceSlug)
+                ->where('environment', $environment)
+                ->where('fingerprint', $fingerprint)
+                ->first()
+            : null;
 
         $report = Report::create([
-            'source_slug' => $token['source_slug'],
+            'source_slug' => $sourceSlug,
             'reporter_installation_id' => $token['reporter_installation_id'],
-            'environment' => $token['env'] ?? 'production',
+            'occurrence_parent_id' => $canonical?->id,
+            'fingerprint' => $fingerprint,
+            'environment' => $environment,
             'reporter_user_id' => $token['user_id'] ?? null,
             'reporter_email' => $token['user_email'],
             'reporter_name' => $token['user_name'] ?? null,
             'type' => $request->input('type'),
             'severity' => $request->input('severity'),
-            'status' => 'new',
             'title' => $request->input('title'),
             'description' => $request->input('description'),
             'url' => $meta['url'] ?? '',
@@ -85,6 +107,17 @@ class ReportsController extends Controller
         $hydrated = $this->fetcher->fetch($installation ?? $token['source_slug'], $ids);
         $report->laravel_context = array_map(fn ($id) => ['id' => $id, 'context' => $hydrated[$id] ?? null], $ids);
         $report->save();
+
+        if ($canonical) {
+            $severityRanks = ['low' => 0, 'med' => 1, 'high' => 2, 'blocker' => 3];
+            $updates = ['archived_at' => null, 'updated_at' => now()];
+            if (($severityRanks[$report->severity] ?? 0) > ($severityRanks[$canonical->severity] ?? 0)) {
+                $updates['severity'] = $report->severity;
+            }
+            $canonical->update($updates);
+        }
+
+        Notification::send(User::all(), new ReportReceived($report));
 
         return response()->json(['report_id' => $report->id], 201);
     }

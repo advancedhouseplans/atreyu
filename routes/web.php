@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttachmentController;
+use App\Livewire\Notifications\Index as NotificationsIndex;
 use App\Livewire\Projects\Index as ProjectsIndex;
 use App\Livewire\Projects\Show as ProjectsShow;
 use App\Livewire\Reports\Index;
@@ -13,6 +14,7 @@ Route::redirect('/', '/reports')->name('home');
 
 Route::middleware('auth')->group(function () {
     Route::get('/projects', ProjectsIndex::class)->name('projects.index');
+    Route::get('/notifications', NotificationsIndex::class)->name('notifications.index');
     Route::get('/projects/{project}', ProjectsShow::class)->name('projects.show');
     Route::get('/tasks', TasksIndex::class)->name('tasks.index');
     Route::get('/tasks/{task}', TasksShow::class)->name('tasks.show');

@@ -7,11 +7,28 @@
 
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         @forelse ($projects as $project)
+            @php
+                $projectConnected = $project->connection?->last_seen_at?->isAfter(now()->subMinutes(10)) && $project->connection->isActive();
+                $connectionLabel = match (true) {
+                    ! $project->connection => 'Not connected',
+                    (bool) $project->connection->revoked_at => 'Revoked',
+                    $projectConnected => 'Connected',
+                    default => 'Waiting',
+                };
+                $connectionColor = match ($connectionLabel) {
+                    'Connected' => 'success',
+                    'Revoked' => 'danger',
+                    default => 'neutral',
+                };
+            @endphp
             <a href="{{ route('projects.show', $project) }}" wire:navigate wire:key="project-{{ $project->id }}" class="group rounded-xl focus-ring">
                 <x-ob::card class="h-full space-y-4 transition duration-120 ease-ob group-hover:bg-surface-3">
                     <div class="flex items-start justify-between gap-4">
                         <span class="grid size-10 place-items-center rounded-lg bg-accent-soft text-accent-fg"><x-ob::icon name="folder" class="size-5" /></span>
-                        <x-ob::badge>{{ $project->tasks_count }} {{ Str::plural('task', $project->tasks_count) }}</x-ob::badge>
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <x-ob::badge :color="$connectionColor" dot>{{ $connectionLabel }}</x-ob::badge>
+                            <x-ob::badge>{{ $project->tasks_count }} {{ Str::plural('task', $project->tasks_count) }}</x-ob::badge>
+                        </div>
                     </div>
                     <div>
                         <h2 class="text-base font-semibold">{{ $project->name }}</h2>

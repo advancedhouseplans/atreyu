@@ -8,6 +8,8 @@ use App\Livewire\Tasks\Show;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Notifications\TaskAssigned;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 it('updates task details and adds a comment', function () {
@@ -160,4 +162,48 @@ it('aborts with 422 when the inline status is cleared', function () {
         ->assertStatus(422);
 
     expect($task->fresh()->status)->toBe(TaskStatus::Review);
+});
+
+it('renders task descriptions as safe markdown', function () {
+    $task = Task::factory()->create([
+        'description' => "## Setup\n\n- Install updates\n- **Restart**\n\n<script>alert('nope')</script>",
+    ]);
+
+    Livewire::actingAs(User::factory()->create())->test(Show::class, ['task' => $task])
+        ->assertSeeHtml('<h2>Setup</h2>')
+        ->assertSeeHtml('<strong>Restart</strong>')
+        ->assertDontSeeHtml('<script>');
+});
+
+it('creates and completes a nested subtask without adding it to the top-level board order', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->for($user, 'assignee')->create();
+
+    $component = Livewire::actingAs($user)->test(Show::class, ['task' => $task])
+        ->set('newSubtaskTitle', 'Install system updates')
+        ->call('addSubtask')
+        ->assertHasNoErrors()
+        ->assertSee('Install system updates');
+
+    $subtask = Task::where('parent_id', $task->id)->sole();
+    expect($subtask->project_id)->toBe($task->project_id)
+        ->and($subtask->assignee_id)->toBe($user->id)
+        ->and($subtask->status)->toBe(TaskStatus::Backlog);
+
+    $component->call('toggleSubtask', $subtask->id)->assertSee('1/1 complete');
+    expect($subtask->fresh()->status)->toBe(TaskStatus::Done);
+});
+
+it('notifies a newly assigned user but not someone assigning a task to themselves', function () {
+    Notification::fake();
+    $actor = User::factory()->create();
+    $assignee = User::factory()->create();
+    $task = Task::factory()->create(['assignee_id' => null]);
+
+    Livewire::actingAs($actor)->test(Show::class, ['task' => $task])
+        ->call('updateAssignee', $assignee->id)
+        ->call('updateAssignee', $actor->id);
+
+    Notification::assertSentTo($assignee, TaskAssigned::class);
+    Notification::assertNotSentTo($actor, TaskAssigned::class);
 });

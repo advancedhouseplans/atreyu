@@ -37,7 +37,10 @@
                                     data-test="sidebar-menu-button"
                                     class="flex h-12 w-full items-center gap-3 rounded-lg px-2 text-left transition duration-120 ease-ob hover:bg-surface-3 focus-ring"
                                 >
-                                    <x-ob::avatar :initials="auth()->user()->initials()" />
+                                    <span class="relative shrink-0">
+                                        <x-ob::avatar :initials="auth()->user()->initials()" />
+                                        <livewire:notifications.unread-indicator :key="'sidebar-unread-notifications'" />
+                                    </span>
                                     <span x-show="!collapsed" class="min-w-0 flex-1">
                                         <span class="block truncate text-sm font-medium text-fg">{{ auth()->user()->name }}</span>
                                         <span class="block truncate text-xs text-fg-3">{{ auth()->user()->email }}</span>
@@ -45,6 +48,7 @@
                                 </button>
                             </x-slot:trigger>
 
+                            <x-ob::menu.item icon="bell" :href="route('notifications.index')" navigate>Notifications</x-ob::menu.item>
                             <x-ob::menu.item icon="cog-6-tooth" :href="route('profile.edit')" navigate>Settings</x-ob::menu.item>
                             <x-ob::menu.separator />
                             <form method="POST" action="{{ route('logout') }}">
@@ -70,7 +74,10 @@
                         @if (request()->is('settings', 'settings/*')) aria-current="page" @endif
                         class="flex size-11 items-center justify-center rounded-[14px] transition duration-120 ease-ob hover:bg-surface-3 focus-ring {{ request()->is('settings', 'settings/*') ? 'bg-accent-soft' : '' }}"
                     >
-                        <x-ob::avatar :initials="auth()->user()->initials()" size="sm" />
+                        <span class="relative">
+                            <x-ob::avatar :initials="auth()->user()->initials()" size="sm" />
+                            <livewire:notifications.unread-indicator :key="'dock-unread-notifications'" />
+                        </span>
                     </a>
                 </x-ob::dock>
             </x-slot:dock>

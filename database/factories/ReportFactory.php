@@ -24,7 +24,6 @@ class ReportFactory extends Factory
             'reporter_name' => $this->faker->name(),
             'type' => 'bug',
             'severity' => 'med',
-            'status' => 'new',
             'title' => $this->faker->sentence(),
             'description' => $this->faker->paragraph(),
             'url' => 'https://ahp.test/plans/1',

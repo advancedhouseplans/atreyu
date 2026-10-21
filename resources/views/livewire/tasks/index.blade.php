@@ -7,6 +7,31 @@
     $statusOptions = $toOptions($statuses);
     $difficultyOptions = $toOptions($difficulties);
     $priorityOptions = $toOptions($priorities);
+    $sortOptions = [
+        ['value' => 'updated_at', 'label' => 'Recently updated'],
+        ['value' => 'created_at', 'label' => 'Recently created'],
+        ['value' => 'priority', 'label' => 'Priority'],
+        ['value' => 'due_date', 'label' => 'Due date'],
+        ['value' => 'difficulty', 'label' => 'Difficulty'],
+        ['value' => 'title', 'label' => 'Title'],
+    ];
+
+    $activeFilters = [];
+    if ($scope !== 'all') {
+        $activeFilters['scope'] = $scope === 'mine' ? 'My work' : 'Unassigned';
+    }
+    if ($display === 'list' && $status !== '') {
+        $activeFilters['status'] = collect($statusOptions)->firstWhere('value', $status)['label'] ?? str($status)->headline();
+    }
+    if ($project !== '') {
+        $activeFilters['project'] = $projects->firstWhere('id', (int) $project)?->name ?? 'Project';
+    }
+    if ($priorityFilter !== '') {
+        $activeFilters['priority'] = collect($priorityOptions)->firstWhere('value', $priorityFilter)['label'] ?? str($priorityFilter)->headline();
+    }
+    if ($visibility === 'archived') {
+        $activeFilters['visibility'] = 'Archived';
+    }
 
     $priorityColor = fn ($priority) => match ($priority) {
         \App\Enums\TaskPriority::Urgent => 'danger',
@@ -30,40 +55,66 @@
         </x-slot:actions>
     </x-ob::page-header>
 
-    <div class="mb-5 flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
-        <div class="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
-            <x-ob::input icon="magnifying-glass" type="search" wire:model.live.debounce.300ms="q" placeholder="Search tasks or ID" aria-label="Search tasks" />
-            <x-ob::select wire:model.live="scope" :options="[['value' => 'mine', 'label' => 'My work'], ['value' => 'all', 'label' => 'Everyone'], ['value' => 'unassigned', 'label' => 'Unassigned']]" aria-label="Filter by assignee" />
-            @if ($display === 'list')
-                <x-ob::select wire:model.live="status" placeholder="Any status" :options="$statusOptions" aria-label="Filter by status" />
-            @endif
-            <x-ob::select wire:model.live="project" placeholder="Any project" :options="$projectOptions" aria-label="Filter by project" />
-            <x-ob::select wire:model.live="priorityFilter" placeholder="Any priority" :options="$priorityOptions" aria-label="Filter by priority" />
-            <x-ob::select wire:model.live="visibility" :options="[['value' => 'active', 'label' => 'Active'], ['value' => 'archived', 'label' => 'Archived']]" aria-label="Filter by visibility" />
-            @if ($display === 'list')
-                <x-ob::select wire:model.live="sortBy" :options="[
-                    ['value' => 'updated_at', 'label' => 'Recently updated'],
-                    ['value' => 'created_at', 'label' => 'Recently created'],
-                    ['value' => 'priority', 'label' => 'Priority'],
-                    ['value' => 'due_date', 'label' => 'Due date'],
-                    ['value' => 'difficulty', 'label' => 'Difficulty'],
-                    ['value' => 'title', 'label' => 'Title'],
-                ]" aria-label="Sort by" />
-                <x-ob::button
-                    :icon="$sortDir === 'asc' ? 'bars-arrow-up' : 'bars-arrow-down'"
-                    :label="$sortDir === 'asc' ? 'Sort descending' : 'Sort ascending'"
-                    wire:click="$set('sortDir', '{{ $sortDir === 'asc' ? 'desc' : 'asc' }}')"
-                    class="self-start"
+    <div class="mb-5 space-y-3" x-data="{ filtersOpen: false }">
+        <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div class="min-w-0">
+                <x-ob::input icon="magnifying-glass" type="search" wire:model.live.debounce.300ms="q" placeholder="Search tasks or ID" aria-label="Search tasks" />
+            </div>
+            <div class="flex flex-nowrap items-center gap-2">
+                <x-ob::button variant="secondary" icon="funnel" x-on:click="filtersOpen = ! filtersOpen" x-bind:aria-expanded="filtersOpen.toString()" aria-controls="task-filters">
+                    Filters
+                    @if (count($activeFilters))
+                        <span class="grid size-5 place-items-center rounded-full bg-accent text-[11px] text-on-accent">{{ count($activeFilters) }}</span>
+                    @endif
+                </x-ob::button>
+
+                @if ($display === 'list')
+                    <x-ob::dropdown>
+                        <x-slot:trigger>
+                            <x-ob::button variant="secondary" :icon="$sortDir === 'asc' ? 'bars-arrow-up' : 'bars-arrow-down'" icon:trailing="chevron-down">Sort</x-ob::button>
+                        </x-slot:trigger>
+                        @foreach ($sortOptions as $option)
+                            <x-ob::menu.item :icon="$sortBy === $option['value'] ? 'check' : null" wire:click="$set('sortBy', '{{ $option['value'] }}')">{{ $option['label'] }}</x-ob::menu.item>
+                        @endforeach
+                        <x-ob::menu.separator />
+                        <x-ob::menu.item :icon="$sortDir === 'asc' ? 'bars-arrow-up' : 'bars-arrow-down'" wire:click="$set('sortDir', '{{ $sortDir === 'asc' ? 'desc' : 'asc' }}')">
+                            {{ $sortDir === 'asc' ? 'Ascending' : 'Descending' }}
+                        </x-ob::menu.item>
+                    </x-ob::dropdown>
+                @endif
+
+                <x-ob::segmented
+                    name="display"
+                    label="Display"
+                    wire:model.live="display"
+                    class="shrink-0"
+                    :options="[['value' => 'board', 'label' => 'Board', 'icon' => 'view-columns'], ['value' => 'list', 'label' => 'List', 'icon' => 'list-bullet']]"
                 />
+            </div>
+        </div>
+
+        <div id="task-filters" x-show="filtersOpen" x-cloak x-transition class="grid gap-3 rounded-xl border border-hairline bg-surface-1 p-3 sm:grid-cols-2 lg:grid-cols-5">
+            <x-ob::select label="Assignee" wire:model.live="scope" :options="[['value' => 'mine', 'label' => 'My work'], ['value' => 'all', 'label' => 'Everyone'], ['value' => 'unassigned', 'label' => 'Unassigned']]" aria-label="Filter by assignee" />
+            @if ($display === 'list')
+                <x-ob::select label="Status" wire:model.live="status" placeholder="Any status" :options="$statusOptions" aria-label="Filter by status" />
+            @endif
+            <x-ob::select label="Project" wire:model.live="project" placeholder="Any project" :options="$projectOptions" aria-label="Filter by project" />
+            <x-ob::select label="Priority" wire:model.live="priorityFilter" placeholder="Any priority" :options="$priorityOptions" aria-label="Filter by priority" />
+            <x-ob::select label="Visibility" wire:model.live="visibility" :options="[['value' => 'active', 'label' => 'Active'], ['value' => 'archived', 'label' => 'Archived']]" aria-label="Filter by visibility" />
+            @if (count($activeFilters))
+                <div class="flex items-end">
+                    <x-ob::button variant="ghost" wire:click="clearFilters">Clear all</x-ob::button>
+                </div>
             @endif
         </div>
-        <x-ob::segmented
-            name="display"
-            label="Display"
-            wire:model.live="display"
-            class="self-start"
-            :options="[['value' => 'board', 'label' => 'Board', 'icon' => 'view-columns'], ['value' => 'list', 'label' => 'List', 'icon' => 'list-bullet']]"
-        />
+
+        @if (count($activeFilters))
+            <div class="flex flex-wrap gap-2" aria-label="Active filters">
+                @foreach ($activeFilters as $filter => $label)
+                    <x-ob::button variant="secondary" size="sm" icon:trailing="x-mark" wire:click="clearFilter('{{ $filter }}')">{{ $label }}</x-ob::button>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     @if ($display === 'board')
@@ -148,7 +199,7 @@
     <x-ob::modal wire:model="showCreate" title="New task" description="Add work directly to a project" size="lg">
         <form id="create-task-form" wire:submit="createTask" class="space-y-4">
             <x-ob::input label="Title" wire:model="title" placeholder="Build a new PC for the new employee" required />
-            <x-ob::textarea label="Description" wire:model="description" rows="4" placeholder="Add the context someone needs to pick this up." />
+            <x-ob::textarea label="Description" wire:model="description" rows="4" placeholder="Add the context someone needs to pick this up." hint="Markdown supported" />
             <div class="grid gap-4 sm:grid-cols-2">
                 <x-ob::combobox label="Project" wire:model="projectId" placeholder="Choose a project" :options="$projectOptions" />
                 <x-ob::combobox label="Assignee" wire:model="assigneeId" placeholder="Unassigned" :options="[['value' => '', 'label' => 'Unassigned'], ...$assigneeOptions]" />

@@ -100,6 +100,27 @@ it('returns 422 and creates nothing when required task fields are missing', func
     $this->assertDatabaseCount('tasks', 0);
 });
 
+it('creates a subtask under a task in the same project', function () {
+    $user = User::factory()->create();
+    $parent = Task::factory()->create();
+    Sanctum::actingAs($user);
+
+    $this->postJson('/api/v1/tasks', [
+        'project_id' => $parent->project_id,
+        'parent_id' => $parent->id,
+        'type' => TaskType::Build->value,
+        'title' => 'Install updates',
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.parent_id', $parent->id);
+
+    $this->assertDatabaseHas('tasks', [
+        'parent_id' => $parent->id,
+        'project_id' => $parent->project_id,
+        'title' => 'Install updates',
+    ]);
+});
+
 it('returns task details with comments and its source report', function () {
     $user = User::factory()->create();
     $report = Report::factory()->create([
@@ -116,6 +137,19 @@ it('returns task details with comments and its source report', function () {
         ->assertJsonPath('data.report.source_slug', 'takeoff')
         ->assertJsonPath('data.comments.0.body', 'Reproduced')
         ->assertJsonPath('data.comments.0.author.id', $user->id);
+});
+
+it('returns the project repository URL with a task', function () {
+    $project = Project::factory()->create([
+        'repository_url' => 'https://github.com/advancedhouseplans/atreyu.git',
+    ]);
+    $task = Task::factory()->for($project)->create(['title' => 'Fix login redirect']);
+    Sanctum::actingAs(User::factory()->create());
+
+    $this->getJson("/api/v1/tasks/{$task->id}")
+        ->assertOk()
+        ->assertJsonPath('data.project.repository_url', 'https://github.com/advancedhouseplans/atreyu.git')
+        ->assertJsonPath('data.project.repository_label', 'advancedhouseplans/atreyu');
 });
 
 it('updates task fields and moves status through the board ordering action', function () {

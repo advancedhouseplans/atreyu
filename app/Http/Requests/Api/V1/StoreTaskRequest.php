@@ -29,6 +29,7 @@ class StoreTaskRequest extends FormRequest
     {
         return [
             'project_id' => ['required', 'integer', Rule::exists('projects', 'id')],
+            'parent_id' => ['nullable', 'integer', Rule::exists('tasks', 'id')->whereNull('parent_id')],
             'assignee_id' => ['nullable', 'integer', Rule::exists('users', 'id')],
             'type' => ['required', Rule::enum(TaskType::class)],
             'status' => ['sometimes', Rule::enum(TaskStatus::class)],

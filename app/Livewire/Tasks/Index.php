@@ -3,6 +3,7 @@
 namespace App\Livewire\Tasks;
 
 use App\Actions\MoveTask;
+use App\Actions\NotifyTaskAssignment;
 use App\Actions\RecordTaskActivity;
 use App\Enums\TaskDifficulty;
 use App\Enums\TaskPriority;
@@ -110,6 +111,7 @@ class Index extends Component
             'description' => $validated['description'],
         ]);
         app(RecordTaskActivity::class)->handle($task, 'created', auth()->user());
+        app(NotifyTaskAssignment::class)->handle($task, auth()->user());
 
         $this->reset(['title', 'description', 'projectId', 'assigneeId', 'difficulty', 'dueDate', 'showCreate']);
         $this->type = TaskType::Build->value;
@@ -162,6 +164,30 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function clearFilter(string $filter): void
+    {
+        match ($filter) {
+            'scope' => $this->scope = 'all',
+            'status' => $this->status = '',
+            'project' => $this->project = '',
+            'priority' => $this->priorityFilter = '',
+            'visibility' => $this->visibility = 'active',
+            default => null,
+        };
+
+        $this->resetPage();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->scope = 'all';
+        $this->status = '';
+        $this->project = '';
+        $this->priorityFilter = '';
+        $this->visibility = 'active';
+        $this->resetPage();
+    }
+
     public function moveTask(int $taskId, int $position, string $status, MoveTask $moveTask): void
     {
         $destinationStatus = TaskStatus::tryFrom($status);
@@ -202,6 +228,7 @@ class Index extends Component
     {
         return Task::query()
             ->with(['project', 'assignee', 'report'])
+            ->whereNull('parent_id')
             ->when($this->scope === 'mine', fn ($query) => $query->where('assignee_id', auth()->id()))
             ->when($this->scope === 'unassigned', fn ($query) => $query->whereNull('assignee_id'))
             ->when($this->project, fn ($query) => $query->where('project_id', $this->project))

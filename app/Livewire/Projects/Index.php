@@ -33,16 +33,17 @@ class Index extends Component
             $suffix++;
         }
 
-        Project::create([...$validated, 'slug' => $slug]);
+        $project = Project::create([...$validated, 'slug' => $slug]);
 
         $this->reset(['name', 'description', 'showCreate']);
+        $this->redirectRoute('projects.show', ['project' => $project, 'connect' => 1], navigate: true);
     }
 
     public function render(): View
     {
         return view('livewire.projects.index', [
-            'projects' => Project::withCount([
-                'tasks' => fn ($query) => $query->whereNull('archived_at'),
+            'projects' => Project::with('connection')->withCount([
+                'tasks' => fn ($query) => $query->whereNull('parent_id')->whereNull('archived_at'),
             ])->orderBy('name')->get(),
         ]);
     }

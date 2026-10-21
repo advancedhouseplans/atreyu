@@ -13,12 +13,16 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class Show extends Component
 {
     public Report $report;
+
+    #[Url(as: 'occurrence')]
+    public string $occurrenceId = '';
 
     public string $newNote = '';
 
@@ -36,7 +40,9 @@ class Show extends Component
 
     public function mount(Report $report): void
     {
-        $this->report = $report->load(['notes.author', 'attachments', 'assignee', 'task']);
+        $selectedId = $report->id;
+        $this->report = $report->canonicalReport()->load(['notes.author', 'attachments', 'task', 'occurrences.attachments']);
+        $this->occurrenceId = (string) request()->query('occurrence', $selectedId);
     }
 
     public function openTriage(): void
@@ -51,7 +57,7 @@ class Show extends Component
 
         $this->triageTitle = $this->report->title;
         $this->triageProjectId = $matchingProject ? (string) $matchingProject->id : 'source';
-        $this->triageAssigneeId = $this->report->assignee_id ? (string) $this->report->assignee_id : '';
+        $this->triageAssigneeId = '';
         $this->triageType = $this->report->type === 'bug' ? TaskType::Bug->value : TaskType::Build->value;
         $this->triageDifficulty = '';
         $this->resetValidation();
@@ -92,34 +98,19 @@ class Show extends Component
         $this->redirectRoute('tasks.show', ['task' => $task], navigate: true);
     }
 
-    public function dismissReport(): void
+    public function archiveReport(): void
     {
         abort_if($this->report->task()->exists(), 422);
 
-        $this->report->update(['status' => 'wontfix']);
+        $this->report->update(['archived_at' => now()]);
         $this->showTriage = false;
     }
 
-    public function reopenReport(): void
+    public function restoreReport(): void
     {
         abort_if($this->report->task()->exists(), 422);
 
-        $this->report->update(['status' => 'new']);
-    }
-
-    public function updateStatus(?string $status): void
-    {
-        abort_unless(in_array((string) $status, ['new', 'in_progress', 'done', 'wontfix'], true), 422);
-        $this->report->update(['status' => $status]);
-    }
-
-    public function updateAssignee(?int $userId): void
-    {
-        if ($userId && ! User::whereKey($userId)->exists()) {
-            return;
-        }
-        $this->report->update(['assignee_id' => $userId]);
-        $this->report->load('assignee');
+        $this->report->update(['archived_at' => null]);
     }
 
     public function updateTitle(?string $title): void
@@ -147,21 +138,34 @@ class Show extends Component
 
     public function render(): View
     {
+        $occurrences = collect([$this->report])
+            ->concat($this->report->occurrences)
+            ->sortByDesc('created_at')
+            ->values();
+        $selectedOccurrence = $occurrences->firstWhere('id', (int) $this->occurrenceId) ?? $this->report;
+
         return view('livewire.reports.show', [
             'projects' => Project::orderBy('name')->get(),
             'users' => User::orderBy('name')->get(),
             'taskTypes' => TaskType::cases(),
             'taskDifficulties' => TaskDifficulty::cases(),
-            'timeline' => $this->buildTimeline(),
+            'timeline' => $this->buildTimeline($selectedOccurrence),
+            'occurrences' => $occurrences,
+            'selectedOccurrence' => $selectedOccurrence,
+            'affectedReporters' => $occurrences
+                ->map(fn (Report $occurrence) => $occurrence->reporter_user_id ?: $occurrence->reporter_email)
+                ->filter()
+                ->unique()
+                ->count(),
         ]);
     }
 
     /** @return array<int, array<string, mixed>> */
-    private function buildTimeline(): array
+    private function buildTimeline(Report $report): array
     {
-        $events = collect($this->report->client_events ?? [])->map(fn ($e) => $e + ['kind' => 'event']);
-        $nets = collect($this->report->network_log ?? [])->map(fn ($n) => $n + ['kind' => 'network']);
-        $ctxs = collect($this->report->laravel_context ?? [])->map(fn ($c) => $c + ['kind' => 'laravel']);
+        $events = collect($report->client_events ?? [])->map(fn ($e) => $e + ['kind' => 'event']);
+        $nets = collect($report->network_log ?? [])->map(fn ($n) => $n + ['kind' => 'network']);
+        $ctxs = collect($report->laravel_context ?? [])->map(fn ($c) => $c + ['kind' => 'laravel']);
 
         return $events->concat($nets)->concat($ctxs)
             ->sortByDesc(fn ($x) => $x['ts'] ?? 0)
