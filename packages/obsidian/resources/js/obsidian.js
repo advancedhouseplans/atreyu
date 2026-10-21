@@ -1,3 +1,4 @@
+import obTooltip from './data/tooltip.js';
 import { applyTheme, mergeTheme, resolveTheme } from './lib/theme.js';
 
 const STORAGE_KEY = 'ob-theme';
@@ -42,6 +43,8 @@ export default function obsidian(Alpine) {
             }
         },
     });
+
+    Alpine.data('obTooltip', obTooltip);
 
     window.addEventListener('ob-theme-apply', (event) => Alpine.store('obTheme').apply(event.detail));
 }
