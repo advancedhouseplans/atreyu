@@ -1,3 +1,5 @@
+import obCombobox from './data/combobox.js';
+import obCommandPalette from './data/command-palette.js';
 import obDock from './data/dock.js';
 import obDropdown from './data/dropdown.js';
 import obInlineEdit from './data/inline-edit.js';
@@ -64,6 +66,8 @@ export default function obsidian(Alpine) {
     });
 
     Alpine.data('obTooltip', obTooltip);
+    Alpine.data('obCombobox', obCombobox);
+    Alpine.data('obCommandPalette', obCommandPalette);
     Alpine.data('obDock', obDock);
     Alpine.data('obDropdown', obDropdown);
     Alpine.data('obInlineEdit', obInlineEdit);
