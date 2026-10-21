@@ -6,92 +6,182 @@ use Throwable;
 
 class ContextBuffer
 {
+    /** @var array<int, array<string, mixed>> */
     private array $queries = [];
 
+    /** @var array<string, array<string, mixed>> */
     private array $models = [];
 
+    /** @var array<int, array<string, mixed>> */
+    private array $logs = [];
+
+    /** @var array<int, array<string, mixed>> */
     private array $exceptions = [];
 
-    private ?string $routeName = null;
+    /** @var array<string, mixed> */
+    private array $request = [];
 
-    private ?string $authGuard = null;
+    /** @var array<string, mixed>|null */
+    private ?array $user = null;
 
-    private mixed $authUserId = null;
+    /** @var array<string, mixed> */
+    private array $response = [];
 
-    private ?string $authEmail = null;
+    private readonly float $startedAt;
 
     public function __construct(
         private readonly string $debugId,
-        private readonly string $method,
-        private readonly string $path,
-    ) {}
-
-    public function setRouteName(?string $name): void
-    {
-        $this->routeName = $name;
+        string $method,
+        string $path,
+        private readonly Redactor $redactor = new Redactor,
+    ) {
+        $this->startedAt = microtime(true);
+        $this->request = ['method' => $method, 'path' => $path];
     }
 
-    public function setAuth(?string $guard, mixed $userId, ?string $email): void
+    public function debugId(): string
     {
-        $this->authGuard = $guard;
-        $this->authUserId = $userId;
-        $this->authEmail = $email;
+        return $this->debugId;
+    }
+
+    /** @param array<string, mixed> $context */
+    public function setRequestContext(array $context): void
+    {
+        $this->request = [...$this->request, ...$this->redactor->value($context)];
+    }
+
+    public function setUser(?string $guard, object $user): void
+    {
+        if (! config('bug-companion.telemetry.user', true)) {
+            return;
+        }
+
+        $this->user = $this->redactor->value([
+            'guard' => $guard,
+            'model' => $user::class,
+            'id' => method_exists($user, 'getAuthIdentifier') ? $user->getAuthIdentifier() : null,
+            'email' => $user->email ?? null,
+            'name' => $user->name ?? null,
+        ]);
     }
 
     public function addQuery(string $sql, array $bindings, float $timeMs, string $connection): void
     {
-        $cap = (int) config('bug-companion.max_queries', 100);
-        if (count($this->queries) >= $cap) {
+        if (! config('bug-companion.telemetry.queries', true) || count($this->queries) >= $this->cap('queries')) {
             return;
         }
+
         $this->queries[] = [
-            'sql' => $sql,
-            'bindings' => array_map(fn ($v) => is_string($v) ? substr($v, 0, 200) : $v, $bindings),
-            'time_ms' => $timeMs,
+            'sql' => $this->redactor->value($sql),
+            'bindings' => array_map($this->redactor->queryBinding(...), $bindings),
+            'time_ms' => round($timeMs, 2),
             'connection' => $connection,
         ];
     }
 
-    public function addModel(string $class, mixed $key): void
+    /** @param array<int, string> $changed */
+    public function addModel(string $operation, string $class, mixed $key, array $changed = []): void
     {
-        $cap = (int) config('bug-companion.max_models', 200);
-        if (count($this->models) >= $cap) {
+        if (! config('bug-companion.telemetry.models', true)) {
             return;
         }
-        $this->models[] = ['class' => $class, 'key' => $key];
+
+        $dedupeKey = $operation.'|'.$class.'|'.serialize($key);
+        if (isset($this->models[$dedupeKey]) || count($this->models) >= $this->cap('models')) {
+            return;
+        }
+
+        $this->models[$dedupeKey] = [
+            'operation' => $operation,
+            'class' => $class,
+            'id' => $this->redactor->value($key),
+            'changed' => array_values($changed),
+        ];
     }
 
-    public function addException(Throwable $e): void
+    /** @param array<string, mixed> $context */
+    public function addLog(string $level, string $message, array $context = []): void
     {
-        $frames = [];
-        foreach (array_slice($e->getTrace(), 0, 30) as $f) {
-            $frames[] = ($f['file'] ?? '?').':'.($f['line'] ?? '?');
+        if (! config('bug-companion.telemetry.logs', true)
+            || ! in_array(strtolower($level), config('bug-companion.telemetry.log_levels', []), true)
+            || count($this->logs) >= $this->cap('logs')) {
+            return;
         }
+
+        $this->logs[] = [
+            'level' => strtolower($level),
+            'message' => $this->redactor->value($message),
+            'context' => $this->redactor->value($context),
+        ];
+    }
+
+    public function addException(Throwable $exception): void
+    {
+        if (! config('bug-companion.telemetry.exceptions', true) || count($this->exceptions) >= $this->cap('exceptions')) {
+            return;
+        }
+
+        $frames = collect($exception->getTrace())
+            ->filter(fn (array $frame): bool => isset($frame['file']))
+            ->take(30)
+            ->map(fn (array $frame): array => [
+                'file' => $this->relativePath((string) $frame['file']),
+                'line' => $frame['line'] ?? null,
+                'class' => $frame['class'] ?? null,
+                'function' => $frame['function'] ?? null,
+            ])->values()->all();
+
         $this->exceptions[] = [
-            'class' => $e::class,
-            'message' => $e->getMessage(),
+            'class' => $exception::class,
+            'message' => $this->redactor->value($exception->getMessage()),
+            'file' => $this->relativePath($exception->getFile()),
+            'line' => $exception->getLine(),
             'frames' => $frames,
         ];
     }
 
+    public function finish(int $status): void
+    {
+        $this->response = [
+            'status' => $status,
+            'duration_ms' => round((microtime(true) - $this->startedAt) * 1000, 2),
+            'memory_peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
+        ];
+    }
+
+    /** @return array<string, mixed> */
     public function toArray(): array
     {
         return [
+            'schema_version' => 2,
             'debug_id' => $this->debugId,
-            'request' => [
-                'method' => $this->method,
-                'path' => $this->path,
-                'route_name' => $this->routeName,
-                'timestamp' => now()->toIso8601String(),
+            'captured_at' => now()->toIso8601String(),
+            'application' => [
+                'name' => config('app.name'),
+                'environment' => app()->environment(),
+                'version' => config('bug-companion.version'),
+                'laravel' => app()->version(),
+                'php' => PHP_VERSION,
             ],
-            'auth' => [
-                'guard' => $this->authGuard,
-                'user_id' => $this->authUserId,
-                'user_email' => $this->authEmail,
-            ],
-            'models' => $this->models,
+            'request' => $this->request,
+            'user' => $this->user,
+            'response' => $this->response,
+            'models' => array_values($this->models),
             'queries' => $this->queries,
+            'logs' => $this->logs,
             'exceptions' => $this->exceptions,
         ];
+    }
+
+    private function cap(string $type): int
+    {
+        return max(0, (int) config("bug-companion.telemetry.max_{$type}", 100));
+    }
+
+    private function relativePath(string $path): string
+    {
+        $basePath = rtrim(base_path(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+
+        return str_starts_with($path, $basePath) ? substr($path, strlen($basePath)) : $path;
     }
 }

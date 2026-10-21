@@ -14,8 +14,9 @@ abstract class TestCase extends OrchestraTestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('bug-companion.secret', 'topsecret');
-        $app['config']->set('bug-companion.source_slug', 'ahp');
-        $app['config']->set('bug-companion.endpoint', 'https://bugs.test');
+        $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
+        $app['config']->set('bug-companion.key', 'topsecret');
+        $app['config']->set('bug-companion.project', 'ahp');
+        $app['config']->set('bug-companion.url', 'https://bugs.test');
     }
 }

@@ -1,11 +1,12 @@
 // resources/widget/index.js
 import { Ring } from './lib/ring.js';
 import { installNetworkCapture } from './lib/net.js';
-import { installEventCapture } from './lib/events.js';
 import { readConfig } from './lib/config.js';
 import { mountUi } from './lib/ui.js';
 import { snapshot } from './lib/snapshot.js';
 import { submit } from './lib/submit.js';
+import { DEFAULT_DIAGNOSTIC_WINDOW_MS, selectRecentDiagnostics } from './lib/diagnostics.js';
+import { startTelemetryActivation } from './lib/activation.js';
 
 (function () {
     if (typeof window === 'undefined') return;
@@ -14,27 +15,47 @@ import { submit } from './lib/submit.js';
     const config = readConfig(scriptEl);
     if (!config || !config.endpoint) return;
 
-    const netRing = new Ring(50);
-    const eventRing = new Ring(100);
-    installNetworkCapture({ ring: netRing, skipUrlPrefix: config.endpoint });
-    installEventCapture({ ring: eventRing });
+    startTelemetryActivation({
+        token: config.token,
+        refreshMs: Number(config.activation_refresh_ms) || 60000,
+        onToken: token => { config.token = token; },
+    });
+
+    const maxRequests = Number(config.diagnostic_requests) || 5;
+    const netRing = new Ring(maxRequests);
+    installNetworkCapture({
+        ring: netRing,
+        skipUrlPrefix: config.endpoint,
+        activeToken: () => config.token,
+    });
 
     const boot = () => {
         let currentSnapshot = null;
+        let currentDiagnostics = null;
 
         mountUi({
             config,
+            onOpen: () => {
+                currentDiagnostics = selectRecentDiagnostics({
+                    network: netRing.toArray(),
+                    events: [],
+                    initialDebugId: config.debug_id,
+                    initialDebugTimestamp: config.debug_ts,
+                    windowMs: Number(config.diagnostic_window_ms) || DEFAULT_DIAGNOSTIC_WINDOW_MS,
+                    maxRequests,
+                    maxEvents: 0,
+                });
+            },
             onCapture: async () => {
                 currentSnapshot = null;
-                const blob = await snapshot();
+                const blob = await snapshot({ endpoint: config.endpoint });
                 currentSnapshot = blob;
                 return URL.createObjectURL(blob);
             },
             onSubmit: async (formData, { close, disable, enable }) => {
                 disable();
                 try {
-                    const network = netRing.toArray();
-                    const debugIds = Array.from(new Set(network.map(x => x.debug_id).filter(Boolean)));
+                    const diagnostics = currentDiagnostics || { network: [], events: [], debugIds: [] };
 
                     const metadata = {
                         url: location.href,
@@ -47,9 +68,9 @@ import { submit } from './lib/submit.js';
                         locale: navigator.language,
                         user_agent: navigator.userAgent,
                         app_version: document.querySelector('meta[name=app-version]')?.getAttribute('content') || null,
-                        network_log: network,
-                        client_events: eventRing.toArray(),
-                        debug_ids: debugIds,
+                        network_log: diagnostics.network,
+                        client_events: diagnostics.events,
+                        debug_ids: diagnostics.debugIds,
                     };
 
                     const result = await submit({

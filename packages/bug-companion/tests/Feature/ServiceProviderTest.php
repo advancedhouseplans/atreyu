@@ -8,6 +8,6 @@ class ServiceProviderTest extends TestCase
 {
     public function test_config_merges(): void
     {
-        $this->assertSame('ahp', config('bug-companion.source_slug'));
+        $this->assertSame('ahp', config('bug-companion.project'));
     }
 }

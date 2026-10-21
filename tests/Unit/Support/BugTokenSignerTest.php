@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Project;
+use App\Models\ReporterInstallation;
 use App\Support\BugTokenSigner;
 
 beforeEach(function () {
@@ -34,5 +36,53 @@ it('rejects expired token', function () {
 
 it('rejects unknown source slug', function () {
     $token = makeToken(['source_slug' => 'ghost', 'exp' => time() + 60], 'topsecret');
+    expect(BugTokenSigner::verify($token))->toBeNull();
+});
+
+it('rejects a signed token missing its reporter identity', function () {
+    $token = makeToken([
+        'source_slug' => 'ahp',
+        'env' => 'prod',
+        'endpoint' => 'x',
+        'user_id' => null,
+        'user_name' => null,
+        'exp' => time() + 60,
+    ], 'topsecret');
+
+    expect(BugTokenSigner::verify($token))->toBeNull();
+});
+
+it('resolves a project from an installation credential', function () {
+    $project = Project::factory()->create(['slug' => 'clara']);
+    $installation = ReporterInstallation::factory()->for($project)->create();
+    $token = makeToken([
+        'key_id' => $installation->key_id,
+        'env' => 'local',
+        'endpoint' => 'https://clara.test',
+        'user_id' => null,
+        'user_email' => null,
+        'user_name' => null,
+        'exp' => time() + 60,
+    ], $installation->secret);
+
+    expect(BugTokenSigner::verify($token))->toMatchArray([
+        'source_slug' => 'clara',
+        'reporter_installation_id' => $installation->id,
+        'user_email' => null,
+    ]);
+});
+
+it('rejects a token from a revoked installation', function () {
+    $installation = ReporterInstallation::factory()->create(['revoked_at' => now()]);
+    $token = makeToken([
+        'key_id' => $installation->key_id,
+        'env' => 'local',
+        'endpoint' => 'https://clara.test',
+        'user_id' => null,
+        'user_email' => null,
+        'user_name' => null,
+        'exp' => time() + 60,
+    ], $installation->secret);
+
     expect(BugTokenSigner::verify($token))->toBeNull();
 });

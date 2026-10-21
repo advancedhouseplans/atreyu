@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { readConfig } from './config.js';
 
 function b64url(s) {
@@ -11,7 +11,7 @@ describe('readConfig', () => {
             user_id: 1, user_email: 'a@b', user_name: 'A', exp: 9e9 };
         const token = `${b64url(JSON.stringify(payload))}.sig`;
         const el = document.createElement('script');
-        el.setAttribute('data-config', token);
+        el.setAttribute('data-atreyu-config', token);
         const cfg = readConfig(el);
         expect(cfg.endpoint).toBe('https://bugs.test');
         expect(cfg.token).toBe(token);

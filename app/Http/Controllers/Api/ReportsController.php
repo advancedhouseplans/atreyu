@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReportRequest;
 use App\Models\Report;
 use App\Models\ReportAttachment;
+use App\Models\ReporterInstallation;
 use App\Services\SourceContextFetcher;
 use App\Support\UserAgentParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class ReportsController extends Controller
 {
@@ -19,7 +21,8 @@ class ReportsController extends Controller
     public function store(StoreReportRequest $request): JsonResponse
     {
         $token = $request->attributes->get('bug.token');
-        $key = "reports:{$token['source_slug']}:{$token['user_email']}";
+        $reporterKey = $token['user_email'] ?? $token['user_id'] ?? $request->ip();
+        $key = "reports:{$token['source_slug']}:{$reporterKey}";
         if (RateLimiter::tooManyAttempts($key, 10)) {
             return response()->json(['error' => 'rate limited'], 429);
         }
@@ -31,6 +34,7 @@ class ReportsController extends Controller
 
         $report = Report::create([
             'source_slug' => $token['source_slug'],
+            'reporter_installation_id' => $token['reporter_installation_id'],
             'environment' => $token['env'] ?? 'production',
             'reporter_user_id' => $token['user_id'] ?? null,
             'reporter_email' => $token['user_email'],
@@ -64,8 +68,21 @@ class ReportsController extends Controller
             $this->storeAttachment($report, $f, 'user_upload');
         }
 
-        $ids = array_values(array_unique(array_filter((array) ($meta['debug_ids'] ?? []))));
-        $hydrated = $this->fetcher->fetch($token['source_slug'], $ids);
+        $debugIds = $meta['debug_ids'] ?? [];
+        if (! is_array($debugIds)) {
+            $debugIds = [];
+        }
+
+        $ids = collect($debugIds)
+            ->filter(fn (mixed $id): bool => is_string($id) && Str::isUuid($id))
+            ->unique()
+            ->take(50)
+            ->values()
+            ->all();
+        $installation = $token['reporter_installation_id']
+            ? ReporterInstallation::find($token['reporter_installation_id'])
+            : null;
+        $hydrated = $this->fetcher->fetch($installation ?? $token['source_slug'], $ids);
         $report->laravel_context = array_map(fn ($id) => ['id' => $id, 'context' => $hydrated[$id] ?? null], $ids);
         $report->save();
 

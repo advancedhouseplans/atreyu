@@ -1,0 +1,95 @@
+<?php
+
+use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
+use App\Enums\TaskType;
+use App\Livewire\Tasks\Index;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
+use Livewire\Livewire;
+
+it('creates a manual task in a project', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->create();
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->set('title', 'Build a new PC')
+        ->set('description', 'For the new employee')
+        ->set('projectId', (string) $project->id)
+        ->set('assigneeId', (string) $user->id)
+        ->set('type', TaskType::Build->value)
+        ->set('difficulty', '3')
+        ->set('priority', TaskPriority::High->value)
+        ->set('dueDate', '2026-11-02')
+        ->call('createTask')
+        ->assertHasNoErrors()
+        ->assertSee('Build a new PC');
+
+    $this->assertDatabaseHas('tasks', [
+        'project_id' => $project->id,
+        'assignee_id' => $user->id,
+        'creator_id' => $user->id,
+        'title' => 'Build a new PC',
+        'type' => 'build',
+        'difficulty' => 3,
+        'priority' => 'high',
+    ]);
+    expect(Task::firstOrFail()->due_date?->toDateString())->toBe('2026-11-02');
+    $this->assertDatabaseHas('task_activities', ['event' => 'created', 'actor_id' => $user->id]);
+});
+
+it('shows only tasks assigned to the current user', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    Task::factory()->for($user, 'assignee')->create(['title' => 'Mine to finish']);
+    Task::factory()->for($otherUser, 'assignee')->create(['title' => 'Someone else owns this']);
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->set('scope', 'mine')
+        ->assertSee('Mine to finish')
+        ->assertDontSee('Someone else owns this');
+});
+
+it('requires authentication through the route', function () {
+    $this->get(route('tasks.index'))->assertRedirect(route('login'));
+});
+
+it('renders all kanban lanes and persists a dragged task status', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->create(['status' => TaskStatus::Backlog, 'position' => 0]);
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->assertSee('Backlog')
+        ->assertSee('In progress')
+        ->assertSee('Review')
+        ->assertSee('Done')
+        ->call('moveTask', $task->id, 0, TaskStatus::InProgress->value)
+        ->assertHasNoErrors();
+
+    expect($task->fresh()->status)->toBe(TaskStatus::InProgress);
+});
+
+it('searches active tasks and keeps archived work out of the default view', function () {
+    $user = User::factory()->create();
+    $active = Task::factory()->create(['title' => 'Replace accounting PC']);
+    $archived = Task::factory()->create(['title' => 'Replace archived PC', 'archived_at' => now()]);
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->set('display', 'list')
+        ->set('q', 'Replace')
+        ->assertSee($active->title)
+        ->assertDontSee($archived->title)
+        ->set('visibility', 'archived')
+        ->assertDontSee($active->title)
+        ->assertSee($archived->title);
+});
+
+it('defaults a quick-created task to the current user', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->call('openCreate')
+        ->assertSet('showCreate', true)
+        ->assertSet('assigneeId', (string) $user->id);
+});

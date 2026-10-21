@@ -27,7 +27,7 @@ class Index extends Component
     public string $severity = '';
 
     #[Url]
-    public string $status = '';
+    public string $status = 'new';
 
     #[Url]
     public string $assignee = '';
@@ -91,7 +91,8 @@ class Index extends Component
             ->when($this->source, fn ($x) => $x->where('source_slug', $this->source))
             ->when($this->type, fn ($x) => $x->where('type', $this->type))
             ->when($this->severity, fn ($x) => $x->where('severity', $this->severity))
-            ->when($this->status, fn ($x) => $x->where('status', $this->status))
+            ->when($this->status === 'converted', fn ($x) => $x->whereHas('task'))
+            ->when($this->status && $this->status !== 'converted', fn ($x) => $x->where('status', $this->status))
             ->when(
                 $this->assignee === 'mine' && auth()->id(),
                 fn ($x) => $x->where('assignee_id', auth()->id()),
@@ -99,6 +100,12 @@ class Index extends Component
             )
             ->orderBy($sortBy, $sortDir);
 
-        return view('livewire.reports.index', ['reports' => $query->paginate(25)]);
+        return view('livewire.reports.index', [
+            'reports' => $query->with('task')->paginate(25),
+            'sources' => Report::query()->select('source_slug')->distinct()->orderBy('source_slug')->pluck('source_slug'),
+            'newCount' => Report::where('status', 'new')->count(),
+            'convertedCount' => Report::whereHas('task')->count(),
+            'dismissedCount' => Report::where('status', 'wontfix')->count(),
+        ]);
     }
 }

@@ -33,7 +33,7 @@
                         submit: '{{ route($submitRoute) }}',
                     },
                 });
-                Livewire.navigate(response.redirect || '/dashboard');
+                Livewire.navigate(response.redirect || '/reports');
             } catch (e) {
                 if (e.constructor?.name !== 'UserCancelledError') {
                     this.error = e.message;
@@ -47,26 +47,21 @@
     <template x-if="supported">
         <div>
             <div class="grid gap-2">
-                <flux:button
-                    variant="outline"
-                    icon="finger-print"
-                    class="w-full"
-                    x-on:click="verify()"
-                    x-bind:disabled="loading"
-                >
+                <button type="button" class="btn btn-secondary w-full" x-on:click="verify()" x-bind:disabled="loading">
+                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 11a3 3 0 0 1 3 3c0 2.8-.8 5.1-2.2 7M9 21c1.3-2.1 2-4.4 2-7a1 1 0 0 1 2 0c0 2.4-.5 4.4-1.5 6.2M6.5 19.5A14 14 0 0 0 8 14a4 4 0 0 1 8 0c0 1.7-.2 3.3-.7 4.8M5 15v-1a7 7 0 0 1 14 0v2M7 7.5A8.8 8.8 0 0 1 12 6c2.1 0 4 .7 5.5 2" stroke-linecap="round" /></svg>
                     <span x-show="!loading">{{ $label }}</span>
                     <span x-show="loading" x-cloak>{{ $loadingLabel }}</span>
-                </flux:button>
+                </button>
                 <p x-show="error" x-text="error" x-cloak
-                   class="text-sm text-center text-red-600 dark:text-red-400"></p>
+                   class="text-error text-center text-sm"></p>
             </div>
 
             <div class="relative my-6">
                 <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-zinc-200 dark:border-zinc-700"></div>
+                    <div class="w-full border-t border-base-content/10"></div>
                 </div>
                 <div class="relative flex justify-center text-xs uppercase">
-                    <span class="px-2 text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900">
+                    <span class="bg-base-100 px-2 text-base-content/45">
                         {{ $separator }}
                     </span>
                 </div>

@@ -1,50 +1,22 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
-    <head>
-        @include('partials.head')
-    </head>
-    <body class="min-h-screen bg-white antialiased dark:bg-linear-to-b dark:from-neutral-950 dark:to-neutral-900">
-        <div class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-            <div class="bg-muted relative hidden h-full flex-col p-10 text-white lg:flex dark:border-e dark:border-neutral-800">
-                <div class="absolute inset-0 bg-neutral-900"></div>
-                <a href="{{ route('home') }}" class="relative z-20 flex items-center text-lg font-medium" wire:navigate>
-                    <span class="flex h-10 w-10 items-center justify-center rounded-md">
-                        <x-app-logo-icon class="me-2 h-7 fill-current text-white" />
-                    </span>
-                    {{ config('app.name', 'Laravel') }}
-                </a>
-
-                @php
-                    [$message, $author] = str(Illuminate\Foundation\Inspiring::quotes()->random())->explode('-');
-                @endphp
-
-                <div class="relative z-20 mt-auto">
-                    <blockquote class="space-y-2">
-                        <flux:heading size="lg">&ldquo;{{ trim($message) }}&rdquo;</flux:heading>
-                        <footer><flux:heading>{{ trim($author) }}</flux:heading></footer>
-                    </blockquote>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ auth()->user()?->theme?->value ?? 'light' }}">
+    <head>@include('partials.head')</head>
+    <body class="min-h-screen bg-base-200 text-base-content antialiased">
+        <main class="grid min-h-screen lg:grid-cols-2">
+            <section class="relative hidden overflow-hidden bg-primary p-12 text-primary-content shadow-[18px_0_60px_-40px_rgba(0,0,0,0.7)] lg:flex lg:flex-col">
+                <x-app-logo class="relative z-10" :href="route('home')" wire:navigate />
+                <div class="relative z-10 mt-auto max-w-lg">
+                    <div class="mb-5 text-xs font-bold uppercase tracking-[0.24em] opacity-60">The work never ends</div>
+                    <h1 class="text-4xl font-bold leading-tight">Keep The Nothing at bay, one task at a time.</h1>
                 </div>
-            </div>
-            <div class="w-full lg:p-8">
-                <div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-                    <a href="{{ route('home') }}" class="z-20 flex flex-col items-center gap-2 font-medium lg:hidden" wire:navigate>
-                        <span class="flex h-9 w-9 items-center justify-center rounded-md">
-                            <x-app-logo-icon class="size-9 fill-current text-black dark:text-white" />
-                        </span>
-
-                        <span class="sr-only">{{ config('app.name', 'Laravel') }}</span>
-                    </a>
-                    {{ $slot }}
+                <div class="absolute -bottom-40 -right-32 size-[34rem] rounded-full border-[5rem] border-primary-content/5"></div>
+            </section>
+            <section class="grid place-items-center p-5 sm:p-10">
+                <div class="w-full max-w-md">
+                    <x-app-logo class="mb-8 justify-center lg:hidden" :href="route('home')" wire:navigate />
+                    <div class="card border border-base-content/5 bg-base-100/75 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.55)] ring-1 ring-base-content/5 backdrop-blur-2xl"><div class="card-body p-7 sm:p-9">{{ $slot }}</div></div>
                 </div>
-            </div>
-        </div>
-
-        @persist('toast')
-            <flux:toast.group>
-                <flux:toast />
-            </flux:toast.group>
-        @endpersist
-
-        @fluxScripts
+            </section>
+        </main>
     </body>
 </html>

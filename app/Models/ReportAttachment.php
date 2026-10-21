@@ -14,6 +14,7 @@ class ReportAttachment extends Model
 
     protected $guarded = [];
 
+    /** @return BelongsTo<Report, $this> */
     public function report(): BelongsTo
     {
         return $this->belongsTo(Report::class);

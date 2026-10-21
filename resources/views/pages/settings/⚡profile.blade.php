@@ -2,7 +2,6 @@
 
 use App\Concerns\ProfileValidationRules;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
@@ -41,7 +40,7 @@ new #[Title('Profile settings')] class extends Component {
 
         $user->save();
 
-        Flux::toast(variant: 'success', text: __('Profile updated.'));
+        Session::flash('success', __('Profile updated.'));
     }
 
     /**
@@ -52,7 +51,7 @@ new #[Title('Profile settings')] class extends Component {
         $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('dashboard', absolute: false));
+            $this->redirectIntended(default: route('reports.index', absolute: false));
 
             return;
         }
@@ -76,32 +75,31 @@ new #[Title('Profile settings')] class extends Component {
     }
 }; ?>
 
-<section class="w-full">
+<section class="w-full p-5 sm:p-7 lg:p-8">
     @include('partials.settings-heading')
 
-    <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
-
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+    <x-pages::settings.layout :heading="__('Profile')">
+        @if (session('success'))<div class="alert alert-success mb-5 text-sm">{{ session('success') }}</div>@endif
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+            <label class="form-control w-full"><span class="label-text mb-2 font-medium">{{ __('Name') }}</span><input class="input input-bordered w-full @error('name') input-error @enderror" wire:model="name" type="text" required autofocus autocomplete="name" />@error('name')<span class="mt-1 text-xs text-error">{{ $message }}</span>@enderror</label>
 
             <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+                <label class="form-control w-full"><span class="label-text mb-2 font-medium">{{ __('Email') }}</span><input class="input input-bordered w-full @error('email') input-error @enderror" wire:model="email" type="email" required autocomplete="email" />@error('email')<span class="mt-1 text-xs text-error">{{ $message }}</span>@enderror</label>
 
                 @if ($this->hasUnverifiedEmail)
                     <div>
-                        <flux:text class="mt-4">
+                        <p class="mt-4 text-sm text-base-content/60">
                             {{ __('Your email address is unverified.') }}
 
-                            <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
+                            <button type="button" class="btn btn-ghost btn-sm mt-2" wire:click.prevent="resendVerificationNotification">
                                 {{ __('Click here to re-send the verification email.') }}
-                            </flux:link>
-                        </flux:text>
+                            </button>
+                        </p>
 
                         @if (session('status') === 'verification-link-sent')
-                            <flux:text class="mt-2 font-medium !dark:text-green-400 !text-green-600">
+                            <p class="mt-2 text-sm font-medium text-success">
                                 {{ __('A new verification link has been sent to your email address.') }}
-                            </flux:text>
+                            </p>
                         @endif
                     </div>
                 @endif
@@ -109,9 +107,9 @@ new #[Title('Profile settings')] class extends Component {
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
+                    <button class="btn btn-primary" type="submit" data-test="update-profile-button">
                         {{ __('Save') }}
-                    </flux:button>
+                    </button>
                 </div>
 
             </div>

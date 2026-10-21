@@ -5,29 +5,33 @@
     "scripts": {
         "build": "vp build",
         "dev": "vp dev",
-        "build:widget": "vite build --config vite.widget.config.js",
-        "test:widget": "vitest run",
+        "build:widget": "vp build --config vite.widget.config.js && vp build --config vite.snapshot.config.js",
+        "test:widget": "vp test",
         "test:widget:e2e": "playwright test"
     },
     "dependencies": {
-        "@laravel/passkeys": "^0.2.0",
+        "@laravel/passkeys": "^0.4.0",
         "@tailwindcss/vite": "^4.1.11",
         "concurrently": "^10.0.3",
-        "html2canvas-pro": "^2.4.0",
+        "html2canvas-pro": "^2.5.0",
         "laravel-vite-plugin": "^3.1",
         "tailwindcss": "^4.0.7",
-        "vite": "^8.0.0",
-        "vite-plus": "0.3.0"
+        "vite-plus": "1.3.0"
     },
     "optionalDependencies": {
-        "@laravel/multiplex": "^0.4.1",
-        "@rollup/rollup-linux-x64-gnu": "4.9.5",
+        "@laravel/multiplex": "^0.4.5",
+        "@rollup/rollup-linux-x64-gnu": "4.64.12",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
     "devDependencies": {
-        "@playwright/test": "^1.62.1",
-        "jsdom": "^29.1.1",
-        "vitest": "^4.1.11"
+        "@playwright/test": "^1.64.1",
+        "daisyui": "^5.7.50",
+        "jsdom": "^29.1.1"
+    },
+    "overrides": {
+        "undici": "7.29.1",
+        "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
+        "vitest": "5.0.5"
     }
 }

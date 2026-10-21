@@ -2,7 +2,9 @@
 
 // tests/Feature/Api/StoreReportTest.php
 
+use App\Models\Project;
 use App\Models\Report;
+use App\Models\ReporterInstallation;
 use App\Services\SourceContextFetcher;
 use Illuminate\Http\Testing\File;
 use Illuminate\Support\Facades\Storage;
@@ -30,10 +32,12 @@ it('rejects unauthenticated submission', function () {
 });
 
 it('creates a report from valid submission', function () {
+    $firstDebugId = '11111111-1111-4111-8111-111111111111';
+    $secondDebugId = '22222222-2222-4222-8222-222222222222';
     $this->mock(SourceContextFetcher::class)
         ->shouldReceive('fetch')->once()
-        ->with('ahp', ['id1', 'id2'])
-        ->andReturn(['id1' => ['route_name' => 'x'], 'id2' => null]);
+        ->with('ahp', [$firstDebugId, $secondDebugId])
+        ->andReturn([$firstDebugId => ['route_name' => 'x'], $secondDebugId => null]);
 
     $metadata = json_encode([
         'url' => 'https://ahp.test/plans/1', 'referrer' => null, 'title' => 'plan',
@@ -41,9 +45,9 @@ it('creates a report from valid submission', function () {
         'timezone' => 'America/New_York', 'locale' => 'en-US',
         'user_agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'app_version' => '1.2.3',
-        'network_log' => [['method' => 'GET', 'url' => '/x', 'status' => 200, 'debug_id' => 'id1']],
+        'network_log' => [['method' => 'GET', 'url' => '/x', 'status' => 200, 'debug_id' => $firstDebugId]],
         'client_events' => [['type' => 'error', 'message' => 'boom']],
-        'debug_ids' => ['id1', 'id2'],
+        'debug_ids' => [$firstDebugId, $secondDebugId],
     ]);
 
     $resp = $this->withHeader('Authorization', bearer())->post('/api/reports', [
@@ -63,7 +67,10 @@ it('creates a report from valid submission', function () {
         ->and($r->reporter_email)->toBe('reporter@ahp.test')
         ->and($r->title)->toBe('Broken thing')
         ->and($r->browser)->toBe('Chrome')
-        ->and($r->laravel_context)->toBe([['id' => 'id1', 'context' => ['route_name' => 'x']], ['id' => 'id2', 'context' => null]])
+        ->and($r->laravel_context)->toBe([
+            ['id' => $firstDebugId, 'context' => ['route_name' => 'x']],
+            ['id' => $secondDebugId, 'context' => null],
+        ])
         ->and($r->attachments)->toHaveCount(2);
 });
 
@@ -80,4 +87,35 @@ it('rate-limits after 10 submissions', function () {
     $this->withHeaders($auth)->post('/api/reports', [
         'title' => 't', 'description' => 'd', 'type' => 'bug', 'severity' => 'low', 'metadata' => '{}',
     ])->assertStatus(429);
+});
+
+it('attributes a report to its registered installation and project', function () {
+    $project = Project::factory()->create(['slug' => 'clara']);
+    $installation = ReporterInstallation::factory()->for($project)->create();
+    $debugId = '11111111-1111-4111-8111-111111111111';
+    $this->mock(SourceContextFetcher::class)
+        ->shouldReceive('fetch')
+        ->once()
+        ->with(Mockery::on(fn ($value): bool => $value instanceof ReporterInstallation && $value->is($installation)), [$debugId])
+        ->andReturn([]);
+    $authorization = bearer([
+        'source_slug' => null,
+        'key_id' => $installation->key_id,
+        'endpoint' => 'https://clara.test',
+        'user_email' => null,
+        'user_name' => null,
+    ], $installation->secret);
+
+    $this->withHeader('Authorization', $authorization)->post('/api/reports', [
+        'title' => 'Anonymous problem',
+        'description' => 'Something went wrong',
+        'type' => 'bug',
+        'severity' => 'low',
+        'metadata' => json_encode(['debug_ids' => [$debugId]], JSON_THROW_ON_ERROR),
+    ])->assertCreated();
+
+    $report = Report::sole();
+    expect($report->source_slug)->toBe('clara')
+        ->and($report->reporter_installation_id)->toBe($installation->id)
+        ->and($report->reporter_email)->toBeNull();
 });

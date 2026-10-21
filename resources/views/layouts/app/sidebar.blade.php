@@ -1,101 +1,54 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ auth()->user()?->theme?->value ?? 'light' }}">
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
-                <flux:sidebar.collapse class="lg:hidden" />
-            </flux:sidebar.header>
+    <body class="min-h-screen bg-base-200 text-base-content antialiased">
+        <x-nav sticky full-width class="border-b border-base-content/5 bg-base-100/70 shadow-[0_8px_30px_-22px_rgba(0,0,0,0.45)] backdrop-blur-2xl lg:hidden">
+            <x-slot:brand>
+                <label for="atreyu-navigation" class="btn btn-square btn-ghost" aria-label="Open navigation">
+                    <x-icon name="o-bars-3" class="size-5" />
+                </label>
+                <x-app-logo sidebar class="ml-2" :href="route('reports.index')" wire:navigate />
+            </x-slot:brand>
+        </x-nav>
 
-            <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
-            </flux:sidebar.nav>
+        <x-main full-width>
+            <x-slot:content class="!p-0">
+                {{ $slot }}
+            </x-slot:content>
 
-            <flux:spacer />
+            <x-slot:sidebar drawer="atreyu-navigation" collapsible collapse-text="Collapse sidebar" class="border-r border-base-content/5 bg-base-100/65 shadow-[12px_0_36px_-30px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
+                <div
+                    class="flex min-h-full flex-col py-4"
+                    x-bind:class="collapsed ? '[&_.menu>li>a]:justify-center [&_.menu>li>a]:!px-0' : ''"
+                >
+                    <x-app-logo
+                        sidebar
+                        class="w-full py-2"
+                        x-bind:class="collapsed ? 'justify-center' : 'px-5'"
+                        :href="route('reports.index')"
+                        wire:navigate
+                    />
 
-            <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
-                </flux:sidebar.item>
+                    <x-menu activate-by-route class="mt-7 gap-1 px-2 [&>li>a]:rounded-xl [&>li>a]:transition-colors">
+                        <x-menu-item title="Reports" icon="o-inbox-stack" :link="route('reports.index')" aria-label="Reports" />
+                        <x-menu-item title="Projects" icon="o-folder" :link="route('projects.index')" aria-label="Projects" />
+                        <x-menu-item title="Tasks" icon="o-check-circle" :link="route('tasks.index')" aria-label="Tasks" />
+                    </x-menu>
 
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
-                </flux:sidebar.item>
-            </flux:sidebar.nav>
+                    <div class="mary-hideable mt-auto border-t border-base-content/10 px-3 pt-4">
+                        <x-desktop-user-menu />
+                    </div>
+                    <a
+                        href="{{ route('profile.edit') }}"
+                        wire:navigate
+                        class="display-when-collapsed mx-auto mt-auto hidden rounded-full p-1 hover:bg-base-300"
+                        aria-label="Open settings for {{ auth()->user()->name }}"
+                    ><x-avatar :placeholder="auth()->user()->initials()" class="!w-9" /></a>
+                </div>
+            </x-slot:sidebar>
+        </x-main>
 
-            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
-        </flux:sidebar>
-
-        <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden">
-            <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
-
-            <flux:spacer />
-
-            <flux:dropdown position="top" align="end">
-                <flux:profile
-                    :initials="auth()->user()->initials()"
-                    icon-trailing="chevron-down"
-                />
-
-                <flux:menu>
-                    <flux:menu.radio.group>
-                        <div class="p-0 text-sm font-normal">
-                            <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                                <flux:avatar
-                                    :name="auth()->user()->name"
-                                    :initials="auth()->user()->initials()"
-                                />
-
-                                <div class="grid flex-1 text-start text-sm leading-tight">
-                                    <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
-                                    <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
-                                </div>
-                            </div>
-                        </div>
-                    </flux:menu.radio.group>
-
-                    <flux:menu.separator />
-
-                    <flux:menu.radio.group>
-                        <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
-                        </flux:menu.item>
-                    </flux:menu.radio.group>
-
-                    <flux:menu.separator />
-
-                    <form method="POST" action="{{ route('logout') }}" class="w-full">
-                        @csrf
-                        <flux:menu.item
-                            as="button"
-                            type="submit"
-                            icon="arrow-right-start-on-rectangle"
-                            class="w-full cursor-pointer"
-                            data-test="logout-button"
-                        >
-                            {{ __('Log out') }}
-                        </flux:menu.item>
-                    </form>
-                </flux:menu>
-            </flux:dropdown>
-        </flux:header>
-
-        {{ $slot }}
-
-        @persist('toast')
-            <flux:toast.group>
-                <flux:toast />
-            </flux:toast.group>
-        @endpersist
-
-        @fluxScripts
     </body>
 </html>

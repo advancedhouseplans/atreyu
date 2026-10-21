@@ -1,29 +1,15 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
-    <head>
-        @include('partials.head')
-    </head>
-    <body class="min-h-screen bg-white antialiased dark:bg-linear-to-b dark:from-neutral-950 dark:to-neutral-900">
-        <div class="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-            <div class="flex w-full max-w-sm flex-col gap-2">
-                <a href="{{ route('home') }}" class="flex flex-col items-center gap-2 font-medium" wire:navigate>
-                    <span class="flex h-9 w-9 mb-1 items-center justify-center rounded-md">
-                        <x-app-logo-icon class="size-9 fill-current text-black dark:text-white" />
-                    </span>
-                    <span class="sr-only">{{ config('app.name', 'Laravel') }}</span>
-                </a>
-                <div class="flex flex-col gap-6">
-                    {{ $slot }}
-                </div>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ auth()->user()?->theme?->value ?? 'light' }}">
+    <head>@include('partials.head')</head>
+    <body class="min-h-screen bg-base-200 text-base-content antialiased">
+        <main class="grid min-h-screen place-items-center p-5">
+            <div class="w-full max-w-md">
+                <x-app-logo class="mb-8 justify-center" :href="route('home')" wire:navigate />
+                <section class="card border border-base-content/5 bg-base-100/75 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.55)] ring-1 ring-base-content/5 backdrop-blur-2xl">
+                    <div class="card-body p-7 sm:p-9">{{ $slot }}</div>
+                </section>
+                <p class="mt-6 text-center text-xs text-base-content/40">Internal workspace · Advanced House Plans</p>
             </div>
-        </div>
-
-        @persist('toast')
-            <flux:toast.group>
-                <flux:toast />
-            </flux:toast.group>
-        @endpersist
-
-        @fluxScripts
+        </main>
     </body>
 </html>

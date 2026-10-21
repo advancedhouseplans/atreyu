@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $password = env('BUGS_SEED_PASSWORD');
+        $password = (string) config('bugs.seed_password');
         if (! $password) {
             $this->command?->warn('BUGS_SEED_PASSWORD not set — skipping user seed');
 

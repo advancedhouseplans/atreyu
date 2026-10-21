@@ -2,6 +2,7 @@
 
 use App\Livewire\Reports\Index;
 use App\Models\Report;
+use App\Models\Task;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -12,9 +13,33 @@ it('renders the list for logged-in users', function () {
 
     Livewire::actingAs($u)->test(Index::class)
         ->assertOk()
-        ->assertSee('shipped')
-        ->set('status', 'new')
-        ->assertDontSee('shipped');
+        ->assertDontSee('Matching reports')
+        ->assertSet('status', 'new')
+        ->assertDontSee('shipped')
+        ->set('status', 'done')
+        ->assertSee('shipped');
+});
+
+it('filters converted reports by their linked task', function () {
+    $user = User::factory()->create();
+    $converted = Report::factory()->create(['status' => 'done', 'title' => 'Converted report']);
+    $waiting = Report::factory()->create(['status' => 'new', 'title' => 'Waiting report']);
+    Task::factory()->for($converted)->create();
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->set('status', 'converted')
+        ->assertSee('Converted report')
+        ->assertDontSee('Waiting report');
+});
+
+it('builds its source filter from incoming reports', function () {
+    $user = User::factory()->create();
+    Report::factory()->create(['source_slug' => 'clara-desktop']);
+
+    Livewire::actingAs($user)->test(Index::class)
+        ->assertSee('Clara Desktop')
+        ->set('source', 'clara-desktop')
+        ->assertOk();
 });
 
 it('searches by title', function () {

@@ -16,7 +16,7 @@ return new class extends Migration
             $t->string('source_slug', 32)->index();
             $t->string('environment', 32);
             $t->unsignedBigInteger('reporter_user_id')->nullable();
-            $t->string('reporter_email')->index();
+            $t->string('reporter_email')->nullable()->index();
             $t->string('reporter_name')->nullable();
             $t->string('type', 16);
             $t->string('severity', 16);

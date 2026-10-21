@@ -1,4 +1,4 @@
-export function installNetworkCapture({ ring, skipUrlPrefix }) {
+export function installNetworkCapture({ ring, skipUrlPrefix, activeToken = () => null }) {
     const originalFetch = globalThis.fetch;
 
     globalThis.fetch = async function (input, init) {
@@ -7,14 +7,23 @@ export function installNetworkCapture({ ring, skipUrlPrefix }) {
         if (skipUrlPrefix && url.startsWith(skipUrlPrefix)) {
             return originalFetch(input, init);
         }
+        let requestInit = init;
+        if (isSameOrigin(url)) {
+            const token = activeToken();
+            if (token) {
+                const headers = new Headers(init?.headers || input?.headers || {});
+                headers.set('X-Atreyu-Active', token);
+                requestInit = { ...init, headers };
+            }
+        }
         const start = performance.now();
         try {
-            const resp = await originalFetch(input, init);
+            const resp = await originalFetch(input, requestInit);
             ring.push({
                 method, url, status: resp.status,
                 duration_ms: Math.round(performance.now() - start),
                 ts: Date.now(),
-                debug_id: resp.headers.get('X-Debug-Id') || null,
+                debug_id: resp.headers.get('X-Atreyu-Debug-Id') || resp.headers.get('X-Debug-Id') || null,
             });
             return resp;
         } catch (e) {
@@ -35,15 +44,27 @@ export function installNetworkCapture({ ring, skipUrlPrefix }) {
                 return origSend.apply(this, arguments);
             }
             this.__bug.start = performance.now();
+            if (isSameOrigin(this.__bug.url)) {
+                const token = activeToken();
+                if (token) { this.setRequestHeader('X-Atreyu-Active', token); }
+            }
             this.addEventListener('loadend', () => {
                 ring.push({
                     method: this.__bug.method, url: this.__bug.url, status: this.status,
                     duration_ms: Math.round(performance.now() - this.__bug.start),
                     ts: Date.now(),
-                    debug_id: this.getResponseHeader('X-Debug-Id') || null,
+                    debug_id: this.getResponseHeader('X-Atreyu-Debug-Id') || this.getResponseHeader('X-Debug-Id') || null,
                 });
             });
             return origSend.apply(this, arguments);
         };
+    }
+}
+
+function isSameOrigin(url) {
+    try {
+        return new URL(url || location.href, location.href).origin === location.origin;
+    } catch (_) {
+        return false;
     }
 }

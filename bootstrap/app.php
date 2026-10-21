@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Middleware\ConfigureReporterCors;
 use App\Http\Middleware\VerifyBugToken;
+use App\Http\Middleware\VerifyReporterSignature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,8 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(ConfigureReporterCors::class);
+
         $middleware->alias([
             'bug.token' => VerifyBugToken::class,
+            'reporter.signature' => VerifyReporterSignature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

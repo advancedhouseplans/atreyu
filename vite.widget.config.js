@@ -1,6 +1,7 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
+    publicDir: false,
     build: {
         emptyOutDir: false,
         outDir: 'public',
@@ -9,11 +10,6 @@ export default defineConfig({
             name: 'BugWidget',
             formats: ['iife'],
             fileName: () => 'widget.js',
-        },
-        rollupOptions: {
-            output: {
-                inlineDynamicImports: true,
-            },
         },
     },
 });
