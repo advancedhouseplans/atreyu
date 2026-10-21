@@ -24,6 +24,7 @@ export default ({ id, multiple = false, server = false, value = null }) => ({
     isDesktop: true,
     isInsideLayer: false,
     observer: null,
+    clearing: false,
 
     init() {
         this.initOverlay();
@@ -106,12 +107,14 @@ export default ({ id, multiple = false, server = false, value = null }) => ({
     /** Resets the query on the inputs themselves so a `wire:model` bound to them follows. */
     clearQuery() {
         this.query = '';
+        this.clearing = true;
         this.$root.querySelectorAll('[data-ob-combobox-input]').forEach((input) => {
             if (input.value !== '') {
                 input.value = '';
                 input.dispatchEvent(new Event('input', { bubbles: true }));
             }
         });
+        this.clearing = false;
     },
 
     onControlClick(event) {
@@ -123,7 +126,11 @@ export default ({ id, multiple = false, server = false, value = null }) => ({
 
     onInput(event) {
         this.query = event.target.value;
-        this.open || this.show();
+
+        // Clearing the query programmatically (on close or select) must never reopen the panel.
+        if (!this.clearing && !this.open) {
+            this.show();
+        }
     },
 
     toggle(option) {

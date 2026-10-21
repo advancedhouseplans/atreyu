@@ -15,7 +15,8 @@
     $model = $attributes->wire('model');
     $modelProperty = ($model->value() ?: null);
     $errorKey = $attributes->get('name') ?? $modelProperty;
-    $id = $attributes->get('id') ?? 'ob-cb-'.Str::lower(Str::random(8));
+    $stableName = $modelProperty ?? $search ?? $attributes->get('name');
+    $id = $attributes->get('id') ?? 'ob-cb-'.($stableName !== null ? Str::slug($stableName) : Str::lower(Str::random(8)));
     $entangled = $modelProperty !== null
         ? "\$wire.\$entangle('".e(addslashes($modelProperty))."'".($model->hasModifier('live') ? ', true' : '').')'
         : 'null';

@@ -1,35 +1,49 @@
 const WORD_BREAKS = new Set([' ', '-', '/', '_']);
 
+const isWordStart = (haystack, index) => index === 0 || WORD_BREAKS.has(haystack[index - 1]);
+
 /**
- * Greedy case-insensitive subsequence score, or null when the query does not match.
- * ponytail: leftmost match only, so a later better alignment is not searched; fine for short labels.
+ * Score of the best subsequence alignment of `query` in `text`, or null when it does not match.
+ * Dynamic programming over (query index, text index) with a running prefix maximum, so O(q * n).
  */
 function score(query, text) {
     const haystack = text.toLowerCase();
-    let total = 0;
-    let position = 0;
-    let previous = -2;
+    let previous = null;
 
-    for (const char of query) {
-        const index = haystack.indexOf(char, position);
+    for (let i = 0; i < query.length; i++) {
+        const current = new Array(haystack.length).fill(-Infinity);
+        let bestBefore = -Infinity; // max of previous[0..j-2]: any earlier, non-adjacent match
 
-        if (index === -1) {
-            return null;
+        for (let j = 0; j < haystack.length; j++) {
+            if (previous && j >= 2) {
+                bestBefore = Math.max(bestBefore, previous[j - 2]);
+            }
+
+            if (haystack[j] !== query[i]) {
+                continue;
+            }
+
+            const wordStart = isWordStart(haystack, j);
+
+            if (previous === null) {
+                current[j] = wordStart ? 10 : 1;
+            } else {
+                const adjacent = j >= 1 ? previous[j - 1] + (wordStart ? 10 : 5) : -Infinity;
+
+                current[j] = Math.max(adjacent, bestBefore + (wordStart ? 10 : 1));
+            }
         }
 
-        if (index === 0 || WORD_BREAKS.has(haystack[index - 1])) {
-            total += 10;
-        } else if (index === previous + 1) {
-            total += 5;
-        } else {
-            total += 1;
-        }
-
-        previous = index;
-        position = index + 1;
+        previous = current;
     }
 
-    return haystack.startsWith(query) ? total + 15 : total;
+    const best = Math.max(...(previous ?? [-Infinity]));
+
+    if (best === -Infinity) {
+        return null;
+    }
+
+    return haystack.startsWith(query) ? best + 15 : best;
 }
 
 /** Filters `items` to those whose text contains the query as a subsequence, best match first. */

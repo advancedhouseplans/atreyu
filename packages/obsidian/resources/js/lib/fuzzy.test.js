@@ -9,3 +9,4 @@ test('empty query keeps order', () => expect(rank('', L('b', 'a')).map((i) => i.
 test('non-matching items are dropped', () => expect(rank('zz', L('Tasks'))).toEqual([]));
 test('equal scores and lengths keep original order', () => expect(rank('a', L('ab', 'ac')).map((i) => i.label)).toEqual(['ab', 'ac']));
 test('a custom key selects the text', () => expect(rank('b', [{ name: 'abc' }, { name: 'b' }], (i) => i.name)).toEqual([{ name: 'b' }, { name: 'abc' }]));
+test('the best alignment wins, not the leftmost', () => expect(rank('ct', L('Cost center', 'Create task')).map((i) => i.label)).toEqual(['Create task', 'Cost center']));
