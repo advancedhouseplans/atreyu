@@ -107,9 +107,9 @@ class Show extends Component
         $this->report->update(['status' => 'new']);
     }
 
-    public function updateStatus(string $status): void
+    public function updateStatus(?string $status): void
     {
-        abort_unless(in_array($status, ['new', 'in_progress', 'done', 'wontfix'], true), 422);
+        abort_unless(in_array((string) $status, ['new', 'in_progress', 'done', 'wontfix'], true), 422);
         $this->report->update(['status' => $status]);
     }
 
@@ -122,9 +122,9 @@ class Show extends Component
         $this->report->load('assignee');
     }
 
-    public function updateTitle(string $title): void
+    public function updateTitle(?string $title): void
     {
-        $validated = Validator::make(['title' => trim($title)], ['title' => ['required', 'string', 'max:255']])->validate();
+        $validated = Validator::make(['title' => trim((string) $title)], ['title' => ['required', 'string', 'max:255']])->validate();
 
         $this->report->update(['title' => $validated['title']]);
         $this->dispatch('toast', message: 'Title updated', variant: 'success');

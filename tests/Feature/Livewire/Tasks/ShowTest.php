@@ -131,3 +131,33 @@ it('rejects an unknown priority', function () {
 
     expect($task->fresh()->priority)->toBe(TaskPriority::Normal);
 });
+
+it('treats a cleared inline title as blank', function () {
+    $task = Task::factory()->create(['title' => 'Old title']);
+
+    Livewire::actingAs(User::factory()->create())->test(Show::class, ['task' => $task])
+        ->call('updateTitle', null)
+        ->assertHasErrors(['title' => 'required']);
+
+    expect($task->fresh()->title)->toBe('Old title');
+});
+
+it('rejects a cleared inline priority', function () {
+    $task = Task::factory()->create(['priority' => TaskPriority::High]);
+
+    Livewire::actingAs(User::factory()->create())->test(Show::class, ['task' => $task])
+        ->call('updatePriority', null)
+        ->assertHasErrors(['priority']);
+
+    expect($task->fresh()->priority)->toBe(TaskPriority::High);
+});
+
+it('aborts with 422 when the inline status is cleared', function () {
+    $task = Task::factory()->create(['status' => TaskStatus::Review]);
+
+    Livewire::actingAs(User::factory()->create())->test(Show::class, ['task' => $task])
+        ->call('updateStatus', null)
+        ->assertStatus(422);
+
+    expect($task->fresh()->status)->toBe(TaskStatus::Review);
+});

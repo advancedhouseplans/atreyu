@@ -120,3 +120,17 @@ it('rejects triage values that do not belong to known records', function () {
 
     expect($report->fresh()->task)->toBeNull();
 });
+
+it('treats a cleared inline title as blank', function () {
+    $report = Report::factory()->create(['title' => 'Original']);
+    Livewire::actingAs(User::factory()->create())->test(Show::class, ['report' => $report])
+        ->call('updateTitle', null)->assertHasErrors(['title' => 'required']);
+    expect($report->refresh()->title)->toBe('Original');
+});
+
+it('aborts with 422 when the inline status is cleared', function () {
+    $report = Report::factory()->create(['status' => 'new']);
+    Livewire::actingAs(User::factory()->create())->test(Show::class, ['report' => $report])
+        ->call('updateStatus', null)->assertStatus(422);
+    expect($report->refresh()->status)->toBe('new');
+});

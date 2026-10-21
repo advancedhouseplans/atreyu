@@ -47,18 +47,18 @@ class Show extends Component
         $this->fillEditForm();
     }
 
-    public function updateStatus(string $status, MoveTask $moveTask): void
+    public function updateStatus(?string $status, MoveTask $moveTask): void
     {
-        $taskStatus = TaskStatus::tryFrom($status);
+        $taskStatus = TaskStatus::tryFrom((string) $status);
         abort_unless($taskStatus !== null, 422);
 
         $moveTask->handle($this->task, $taskStatus, actor: auth()->user());
         $this->refreshTask();
     }
 
-    public function updateTitle(string $title, UpdateTaskDetails $updateTask): void
+    public function updateTitle(?string $title, UpdateTaskDetails $updateTask): void
     {
-        $validated = Validator::make(['title' => trim($title)], ['title' => ['required', 'string', 'max:255']])->validate();
+        $validated = Validator::make(['title' => trim((string) $title)], ['title' => ['required', 'string', 'max:255']])->validate();
 
         $updateTask->handle($this->task, ['title' => $validated['title']], auth()->user());
         $this->refreshTask();
@@ -66,9 +66,9 @@ class Show extends Component
         $this->dispatch('toast', message: 'Title updated', variant: 'success');
     }
 
-    public function updatePriority(string $priority, UpdateTaskDetails $updateTask): void
+    public function updatePriority(?string $priority, UpdateTaskDetails $updateTask): void
     {
-        $validated = Validator::make(['priority' => $priority], ['priority' => ['required', Rule::enum(TaskPriority::class)]])->validate();
+        $validated = Validator::make(['priority' => (string) $priority], ['priority' => ['required', Rule::enum(TaskPriority::class)]])->validate();
 
         $updateTask->handle($this->task, ['priority' => $validated['priority']], auth()->user());
         $this->refreshTask();
