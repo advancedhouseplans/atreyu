@@ -1,0 +1,15 @@
+<?php
+
+it('shows the error for its wire:model name', fn () => withErrors()->blade('<x-ob::input label="Email" wire:model="email" />')->assertSee('Enter an email address.')->assertSee('<div data-invalid', false)->assertSee('role="alert"', false));
+it('shows the hint when there is no error', fn () => $this->blade('<x-ob::input label="Email" hint="We never share it." wire:model="email" />')->assertSee('We never share it.')->assertDontSee('<div data-invalid', false)->assertDontSee('role="alert"', false));
+it('shows the error for an explicit name', fn () => withErrors()->blade('<x-ob::select name="email" :options="[]" />')->assertSee('Enter an email address.'));
+it('forwards wire:model to the inner control', fn () => $this->blade('<x-ob::input wire:model.live="q" class="w-64" />')->assertSeeInOrder(['class="w-64', '<input', 'wire:model.live="q"'], false));
+it('links the label to the control', fn () => $this->blade('<x-ob::textarea label="Notes" wire:model="notes" />')->assertSee('for="notes"', false)->assertSee('id="notes"', false));
+it('renders select options', fn () => $this->blade('<x-ob::select :options="[[\'value\' => \'new\', \'label\' => \'New\']]" placeholder="Any status" />')->assertSee('<option value="">Any status</option>', false)->assertSee('<option value="new">New</option>', false));
+it('renders select options from the slot', fn () => $this->blade('<x-ob::select><option value="a">A</option></x-ob::select>')->assertSee('<option value="a">A</option>', false));
+it('marks switches with the switch role', fn () => $this->blade('<x-ob::switch label="Notify" wire:model="notify" />')->assertSee('role="switch"', false)->assertSee(':aria-checked="on"', false));
+it('renders a segmented control as a radiogroup', fn () => $this->blade('<x-ob::segmented name="mode" :options="[[\'value\' => \'dark\', \'label\' => \'Dark\']]" />')->assertSee('role="radiogroup"', false)->assertSee('value="dark"', false)->assertSee('transition-[left,width] duration-200 ease-ob', false));
+it('renders a checkbox with its label', fn () => $this->blade('<x-ob::checkbox label="Remember me" wire:model="remember" />')->assertSee('type="checkbox"', false)->assertSee('Remember me')->assertSee('wire:model="remember"', false));
+it('renders radio options sharing one name', fn () => $this->blade('<x-ob::radio-group label="Plan" wire:model="plan" :options="[[\'value\' => \'a\', \'label\' => \'Alpha\'], [\'value\' => \'b\', \'label\' => \'Beta\']]" />')->assertSee('role="radiogroup"', false)->assertSee('Alpha')->assertSee('name="plan"', false)->assertSee('value="b"', false));
+it('renders a clearable input with leading icon, prefix and suffix', fn () => $this->blade('<x-ob::input icon="magnifying-glass" clearable prefix="$" suffix="USD" wire:model="q" />')->assertSee('Clear', false)->assertSee('USD')->assertSee('$'));
+it('toggles password visibility', fn () => $this->blade('<x-ob::password label="Password" wire:model="password" />')->assertSee('Show password', false)->assertSee('Hide password', false)->assertSee('type="password"', false));
