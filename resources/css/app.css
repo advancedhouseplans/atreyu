@@ -1,25 +1,8 @@
 @import 'tailwindcss';
 @import '../../vendor/ahp/obsidian/resources/css/obsidian.css';
-@plugin 'daisyui' {
-    themes: light --default, cupcake, bumblebee, emerald, corporate, retro, nord, winter, dark, black, synthwave, halloween, forest, luxury, night, business;
-    exclude: glass;
-}
-
-/* Temporary until DaisyUI is removed: its theme variables reuse these Obsidian token names and win over the
-   @theme layer, and its :root background is base-100 (white overscroll in dark mode), so pages without a
-   DaisyUI data-theme get Obsidian's values back. */
-:root:not([data-theme]) {
-    --color-accent: var(--ob-accent);
-    --color-neutral: var(--ob-neutral);
-    --color-info: var(--ob-info);
-    --color-success: var(--ob-success);
-    --color-warning: var(--ob-warning);
-    --root-bg: var(--color-canvas);
-}
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../vendor/robsontenorio/mary/src/View/Components/**/*.php';
 
 [wire\:cloak] {
     display: none !important;
