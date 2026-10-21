@@ -81,3 +81,35 @@ test('settings page offers a logout form at every breakpoint', function () {
         ->toMatch('#<form[^>]+action="'.preg_quote(route('logout'), '#').'"[^>]*>\s*<input type="hidden" name="_token"#')
         ->toContain('data-test="settings-logout-button"');
 });
+
+test('settings nav keeps its active item after a livewire action', function () {
+    $this->actingAs(User::factory()->create());
+
+    // Livewire::test() reports a synthetic path, so replay a real update request from the rendered page's snapshot.
+    $page = $this->get(route('profile.edit'))->assertOk()->getContent();
+    preg_match('/wire:snapshot="([^"]+)"/', $page, $matches);
+
+    $update = $this->postJson(route('default-livewire.update'), ['components' => [[
+        'snapshot' => html_entity_decode($matches[1]),
+        'updates' => [],
+        'calls' => [['path' => '', 'method' => '$refresh', 'params' => []]],
+    ]]], ['X-Livewire' => 'true'])->assertOk();
+
+    $html = $update->json('components.0.effects.html');
+
+    expect($html)->toMatch('/href="[^"]*\/settings\/profile"\s+wire:navigate\s+aria-current="page"/')
+        ->and(substr_count($html, 'aria-current="page"'))->toBe(1);
+});
+
+test('delete account modal clears the typed password when it closes', function () {
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test('pages::settings.delete-user-modal')
+        ->set('showModal', true)
+        ->set('password', 'wrong-password')
+        ->call('deleteUser')
+        ->assertHasErrors(['password'])
+        ->set('showModal', false)
+        ->assertSet('password', '')
+        ->assertHasNoErrors();
+});

@@ -32,8 +32,6 @@ new class extends Component {
     public function startTwoFactorSetup(): void
     {
         app(EnableTwoFactorAuthentication::class)(auth()->user());
-        $this->reset('code', 'showVerificationStep');
-        $this->resetErrorBag();
         $this->loadSetupData();
         $this->showModal = true;
     }
@@ -79,6 +77,13 @@ new class extends Component {
     {
         $this->reset('code', 'showVerificationStep');
         $this->resetErrorBag();
+    }
+
+    public function updatedShowModal(bool $value): void
+    {
+        if (! $value) {
+            $this->closeModal();
+        }
     }
 
     public function closeModal(): void

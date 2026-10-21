@@ -111,3 +111,16 @@ test('correct password must be provided to update password', function () {
 
     $response->assertHasErrors(['current_password']);
 });
+
+test('closing the two-factor setup modal by any route clears the secret', function () {
+    $this->actingAs(User::factory()->create())->withSession(['auth.password_confirmed_at' => time()]);
+
+    Livewire::test('pages::settings.two-factor-setup-modal', ['requiresConfirmation' => true])
+        ->call('startTwoFactorSetup')
+        ->assertSet('showModal', true)
+        ->assertNotSet('qrCodeSvg', '')
+        ->assertNotSet('manualSetupKey', '')
+        ->set('showModal', false)
+        ->assertSet('qrCodeSvg', '')
+        ->assertSet('manualSetupKey', '');
+});

@@ -8,9 +8,9 @@
 
 <div class="grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8">
     <nav aria-label="{{ __('Settings') }}" class="space-y-4">
-        <ul class="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+        <ul class="-my-1 flex gap-1 overflow-x-auto px-1 py-1 -mx-1 lg:flex-col lg:overflow-visible">
             @foreach ($links as $link)
-                @php($active = request()->routeIs($link['route']))
+                @php($active = \Livewire\Livewire::originalPath() === trim(route($link['route'], absolute: false), '/'))
                 <li class="lg:w-full">
                     <a
                         href="{{ route($link['route']) }}"
