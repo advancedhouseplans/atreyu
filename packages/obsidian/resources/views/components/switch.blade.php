@@ -5,17 +5,16 @@
 
     $errorKey = $attributes->get('name') ?? $attributes->wire('model')->value();
     $id = $attributes->get('id') ?? $errorKey ?? 'ob-'.Str::lower(Str::random(8));
+    $hasError = $errorKey !== null && isset($errors) && $errors->has($errorKey);
+    $describedBy = ($hint || $hasError) ? $id.'-desc' : null;
 @endphp
 
 <x-ob::field :hint="$hint" :error-key="$errorKey" :for="$id" :class="$attributes->get('class')">
-    <label x-data="{ on: false }" class="inline-flex cursor-pointer items-center gap-3 text-sm text-fg">
+    <label class="inline-flex cursor-pointer items-center gap-3 text-sm text-fg max-sm:min-h-11">
         <input
             type="checkbox"
             role="switch"
-            x-init="on = $el.checked"
-            x-on:change="on = $el.checked"
-            :aria-checked="on"
-            {{ $attributes->except(['class', 'label', 'hint'])->merge(['id' => $id, 'aria-describedby' => $id.'-desc', 'class' => 'peer sr-only']) }}
+            {{ $attributes->except(['class', 'label', 'hint'])->merge(['id' => $id, 'aria-describedby' => $describedBy, 'aria-invalid' => $hasError ? 'true' : null, 'class' => 'peer sr-only']) }}
         >
         <span
             aria-hidden="true"

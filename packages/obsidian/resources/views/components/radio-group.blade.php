@@ -3,12 +3,14 @@
 @php
     $errorKey = $attributes->get('name') ?? $attributes->wire('model')->value();
     $name = $errorKey ?? 'ob-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(8));
+    $hasError = $errorKey !== null && isset($errors) && $errors->has($errorKey);
+    $describedBy = ($hint || $hasError) ? $name.'-group-desc' : null;
 @endphp
 
 <x-ob::field :label="$label" :hint="$hint" :error-key="$errorKey" :for="$name.'-group'" :class="$attributes->get('class')">
-    <div id="{{ $name }}-group" role="radiogroup" @if ($label) aria-label="{{ $label }}" @endif aria-describedby="{{ $name }}-group-desc" class="flex flex-col gap-2">
+    <div id="{{ $name }}-group" role="radiogroup" @if ($label) aria-label="{{ $label }}" @endif @if ($describedBy) aria-describedby="{{ $describedBy }}" @endif @if ($hasError) aria-invalid="true" @endif class="flex flex-col gap-2">
         @foreach ($options as $option)
-            <label class="inline-flex cursor-pointer items-center gap-2.5 text-sm text-fg">
+            <label class="inline-flex cursor-pointer items-center gap-2.5 text-sm text-fg max-sm:min-h-11">
                 <input
                     type="radio"
                     value="{{ $option['value'] }}"
