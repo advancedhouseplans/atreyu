@@ -1,6 +1,5 @@
-<x-layouts::auth :title="__('Forgot password')">
+<x-layouts::auth :title="__('Forgot password')" :heading="__('Forgot password?')" :description="__('Enter your email address and we’ll send you a password reset link.')">
     <div class="space-y-6">
-        <x-auth-header :title="__('Forgot password?')" :description="__('Enter your email address and we’ll send you a password reset link.')" />
         <x-auth-session-status class="alert alert-success text-sm" :status="session('status')" />
         <form method="POST" action="{{ route('password.email') }}" class="space-y-5">
             @csrf

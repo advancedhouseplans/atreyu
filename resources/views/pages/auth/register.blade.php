@@ -1,6 +1,5 @@
-<x-layouts::auth :title="__('Create account')">
+<x-layouts::auth :title="__('Create account')" :heading="__('Create an account')" :description="__('Join the Atreyu workspace.')">
     <div class="space-y-6">
-        <x-auth-header :title="__('Create an account')" :description="__('Join the Atreyu workspace.')" />
         <form method="POST" action="{{ route('register.store') }}" class="space-y-4">
             @csrf
             <x-input label="{{ __('Name') }}" icon="o-user" name="name" value="{{ old('name') }}" error-field="name" required autocomplete="name" placeholder="{{ __('Full name') }}" />

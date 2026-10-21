@@ -1,56 +1,70 @@
 <!DOCTYPE html>
-@use('App\Enums\Appearance')
-@php($user = auth()->user())
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-appearance="{{ $user?->appearance->value ?? 'system' }}" data-mode="{{ ($user?->appearance ?? Appearance::System) === Appearance::Light ? 'light' : 'dark' }}" data-accent="{{ $user?->accent->value ?? 'iris' }}">
+<html @include('partials.html-attributes')>
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-base-200 text-base-content antialiased">
-        <x-nav sticky full-width class="border-b border-base-content/5 bg-base-100/70 shadow-[0_8px_30px_-22px_rgba(0,0,0,0.45)] backdrop-blur-2xl lg:hidden">
-            <x-slot:brand>
-                <label for="atreyu-navigation" class="btn btn-square btn-ghost" aria-label="Open navigation">
-                    <x-icon name="o-bars-3" class="size-5" />
-                </label>
-                <x-app-logo sidebar class="ml-2" :href="route('reports.index')" wire:navigate />
-            </x-slot:brand>
-        </x-nav>
+    <body>
+        <x-ob::app-shell>
+            <x-slot:sidebar>
+                <x-ob::sidebar>
+                    <x-slot:brand>
+                        <x-app-logo sidebar :href="route('reports.index')" wire:navigate />
+                    </x-slot:brand>
 
-        <x-main full-width>
-            <x-slot:content class="!p-0">
-                {{ $slot }}
-            </x-slot:content>
+                    <x-ob::sidebar.item :href="route('reports.index')" icon="inbox-stack" label="Reports" />
+                    <x-ob::sidebar.item :href="route('projects.index')" icon="folder" label="Projects" />
+                    <x-ob::sidebar.item :href="route('tasks.index')" icon="check-circle" label="Tasks" />
 
-            <x-slot:sidebar drawer="atreyu-navigation" collapsible collapse-text="Collapse sidebar" class="border-r border-base-content/5 bg-base-100/65 shadow-[12px_0_36px_-30px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
-                <div
-                    class="flex min-h-full flex-col py-4"
-                    x-bind:class="collapsed ? '[&_.menu>li>a]:justify-center [&_.menu>li>a]:!px-0' : ''"
-                >
-                    <x-app-logo
-                        sidebar
-                        class="w-full py-2"
-                        x-bind:class="collapsed ? 'justify-center' : 'px-5'"
-                        :href="route('reports.index')"
-                        wire:navigate
-                    />
+                    <x-slot:footer>
+                        <x-ob::dropdown position="top-start" class="w-full">
+                            <x-slot:trigger>
+                                <button
+                                    type="button"
+                                    aria-label="{{ auth()->user()->name }}"
+                                    data-test="sidebar-menu-button"
+                                    class="flex h-12 w-full items-center gap-3 rounded-lg px-2 text-left transition duration-120 ease-ob hover:bg-surface-3 focus-ring"
+                                >
+                                    <x-ob::avatar :initials="auth()->user()->initials()" />
+                                    <span x-show="!collapsed" class="min-w-0 flex-1">
+                                        <span class="block truncate text-sm font-medium text-fg">{{ auth()->user()->name }}</span>
+                                        <span class="block truncate text-xs text-fg-3">{{ auth()->user()->email }}</span>
+                                    </span>
+                                </button>
+                            </x-slot:trigger>
 
-                    <x-menu activate-by-route class="mt-7 gap-1 px-2 [&>li>a]:rounded-xl [&>li>a]:transition-colors">
-                        <x-menu-item title="Reports" icon="o-inbox-stack" :link="route('reports.index')" aria-label="Reports" />
-                        <x-menu-item title="Projects" icon="o-folder" :link="route('projects.index')" aria-label="Projects" />
-                        <x-menu-item title="Tasks" icon="o-check-circle" :link="route('tasks.index')" aria-label="Tasks" />
-                    </x-menu>
+                            <x-ob::menu.item icon="cog-6-tooth" :href="route('profile.edit')" navigate>Settings</x-ob::menu.item>
+                            <x-ob::menu.separator />
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <x-ob::menu.item type="submit" icon="arrow-right-start-on-rectangle" data-test="logout-button">Log out</x-ob::menu.item>
+                            </form>
+                        </x-ob::dropdown>
+                    </x-slot:footer>
+                </x-ob::sidebar>
+            </x-slot:sidebar>
 
-                    <div class="mary-hideable mt-auto border-t border-base-content/10 px-3 pt-4">
-                        <x-desktop-user-menu />
-                    </div>
+            <x-slot:dock>
+                <x-ob::dock>
+                    <x-ob::dock.item :href="route('reports.index')" icon="inbox-stack" label="Reports" />
+                    <x-ob::dock.item :href="route('projects.index')" icon="folder" label="Projects" />
+                    <x-ob::dock.action icon="plus" label="New task" x-on:click="$dispatch('command-palette-open')" />
+                    <x-ob::dock.item :href="route('tasks.index')" icon="check-circle" label="Tasks" />
+                    {{-- dock.item renders an icon only, so the avatar link reuses its classes by hand. --}}
                     <a
                         href="{{ route('profile.edit') }}"
                         wire:navigate
-                        class="display-when-collapsed mx-auto mt-auto hidden rounded-full p-1 hover:bg-base-300"
-                        aria-label="Open settings for {{ auth()->user()->name }}"
-                    ><x-avatar :placeholder="auth()->user()->initials()" class="!w-9" /></a>
-                </div>
-            </x-slot:sidebar>
-        </x-main>
+                        aria-label="Settings"
+                        @if (request()->is('settings', 'settings/*')) aria-current="page" @endif
+                        class="flex size-11 items-center justify-center rounded-[14px] transition duration-120 ease-ob hover:bg-surface-3 focus-ring {{ request()->is('settings', 'settings/*') ? 'bg-accent-soft' : '' }}"
+                    >
+                        <x-ob::avatar :initials="auth()->user()->initials()" size="sm" />
+                    </a>
+                </x-ob::dock>
+            </x-slot:dock>
 
+            {{ $slot }}
+        </x-ob::app-shell>
+
+        <x-ob::toasts />
     </body>
 </html>

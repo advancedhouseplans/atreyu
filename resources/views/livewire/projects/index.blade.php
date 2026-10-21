@@ -1,9 +1,9 @@
 <div class="p-5 sm:p-7 lg:p-8">
-    <x-page-header title="Projects">
+    <x-ob::page-header title="Projects">
         <x-slot:actions>
             <x-button class="btn-primary rounded-full px-5 shadow-sm" icon="o-plus" wire:click="$set('showCreate', true)" label="New project" />
         </x-slot:actions>
-    </x-page-header>
+    </x-ob::page-header>
 
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         @forelse ($projects as $project)

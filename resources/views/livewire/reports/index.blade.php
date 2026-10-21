@@ -1,5 +1,5 @@
 <div class="p-5 sm:p-7 lg:p-8" wire:loading.class="opacity-70">
-    <x-page-header title="Reports" />
+    <x-ob::page-header title="Reports" />
 
     <div class="mb-6 grid gap-3 sm:grid-cols-3">
         <button type="button" wire:click="$set('status', 'new')" @class(['rounded-2xl border p-4 text-left shadow-sm transition duration-200 hover:shadow-md', 'border-primary bg-primary text-primary-content' => $status === 'new', 'border-base-content/10 bg-base-100 text-base-content hover:border-base-content/20' => $status !== 'new'])>

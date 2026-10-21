@@ -3,14 +3,14 @@
         <x-icon name="o-arrow-left" class="size-4" />Projects
     </a>
 
-    <x-page-header :title="$project->name">
+    <x-ob::page-header :title="$project->name">
         <x-slot:actions>
             <a href="{{ route('tasks.index', ['project' => $project->id]) }}" wire:navigate class="btn btn-ghost rounded-full px-5">
                 <x-icon name="o-rectangle-stack" class="size-5" />View tasks
             </a>
             <x-button class="btn-primary rounded-full px-5 shadow-sm" icon="o-plus" wire:click="$set('showCreate', true)" label="Connect an app" />
         </x-slot:actions>
-    </x-page-header>
+    </x-ob::page-header>
 
     @if ($project->description)
         <p class="-mt-4 mb-7 max-w-3xl text-sm leading-6 text-base-content/60">{{ $project->description }}</p>

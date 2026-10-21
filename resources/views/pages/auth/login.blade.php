@@ -1,6 +1,5 @@
-<x-layouts::auth :title="__('Log in')">
+<x-layouts::auth :title="__('Log in')" :heading="__('Welcome back')" :description="__('Sign in to continue to Atreyu')">
     <div class="space-y-6">
-        <x-auth-header :title="__('Welcome back')" :description="__('Sign in to continue to Atreyu')" />
         <x-auth-session-status class="alert alert-success text-sm" :status="session('status')" />
         <x-passkey-verify />
         <form method="POST" action="{{ route('login.store') }}" class="space-y-5">

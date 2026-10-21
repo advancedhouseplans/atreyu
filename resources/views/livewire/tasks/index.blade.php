@@ -8,11 +8,11 @@
 @endphp
 
 <div class="p-5 sm:p-7 lg:p-8" wire:loading.class="opacity-70">
-    <x-page-header title="Tasks">
+    <x-ob::page-header title="Tasks">
         <x-slot:actions>
             <x-button class="btn-primary rounded-full px-5 shadow-sm" icon="o-plus" wire:click="openCreate" label="New task" />
         </x-slot:actions>
-    </x-page-header>
+    </x-ob::page-header>
 
     <div class="mb-5 flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
         <div class="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">

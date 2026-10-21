@@ -1,6 +1,5 @@
-<x-layouts::auth :title="__('Reset password')">
+<x-layouts::auth :title="__('Reset password')" :heading="__('Reset password')" :description="__('Choose a new password for your account.')">
     <div class="space-y-6">
-        <x-auth-header :title="__('Reset password')" :description="__('Choose a new password for your account.')" />
         <form method="POST" action="{{ route('password.update') }}" class="space-y-4">
             @csrf
             <input type="hidden" name="token" value="{{ request()->route('token') }}">

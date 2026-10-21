@@ -1,1 +1,1 @@
-<x-page-header :title="__('Settings')" />
+<x-ob::page-header :title="__('Settings')" />

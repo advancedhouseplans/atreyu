@@ -30,17 +30,17 @@
             }"
         >
             <div x-show="!showRecoveryInput">
-                <x-auth-header
-                    :title="__('Authentication code')"
-                    :description="__('Enter the authentication code provided by your authenticator application.')"
-                />
+                <div class="text-center">
+                    <h1 class="text-2xl font-semibold tracking-[-0.02em]">{{ __('Authentication code') }}</h1>
+                    <p class="mt-2 text-sm text-fg-2">{{ __('Enter the authentication code provided by your authenticator application.') }}</p>
+                </div>
             </div>
 
             <div x-show="showRecoveryInput">
-                <x-auth-header
-                    :title="__('Recovery code')"
-                    :description="__('Please confirm access to your account by entering one of your emergency recovery codes.')"
-                />
+                <div class="text-center">
+                    <h1 class="text-2xl font-semibold tracking-[-0.02em]">{{ __('Recovery code') }}</h1>
+                    <p class="mt-2 text-sm text-fg-2">{{ __('Please confirm access to your account by entering one of your emergency recovery codes.') }}</p>
+                </div>
             </div>
 
             <form method="POST" action="{{ route('two-factor.login.store') }}">
