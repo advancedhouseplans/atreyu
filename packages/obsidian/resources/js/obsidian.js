@@ -1,3 +1,4 @@
+import obDock from './data/dock.js';
 import obDropdown from './data/dropdown.js';
 import obModal from './data/modal.js';
 import obSheet from './data/sheet.js';
@@ -62,6 +63,7 @@ export default function obsidian(Alpine) {
     });
 
     Alpine.data('obTooltip', obTooltip);
+    Alpine.data('obDock', obDock);
     Alpine.data('obDropdown', obDropdown);
     Alpine.data('obModal', obModal);
     Alpine.data('obSheet', obSheet);

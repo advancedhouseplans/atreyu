@@ -1,4 +1,5 @@
-@props(['text', 'position' => 'top'])
+{{-- `when` is an Alpine expression that gates the tooltip, e.g. only while a sidebar is collapsed. --}}
+@props(['text', 'position' => 'top', 'when' => 'true'])
 
 <span
     x-data="obTooltip"
@@ -12,7 +13,7 @@
 >
     {{ $slot }}
     <span
-        x-show="open"
+        x-show="open && ({{ $when }})"
         x-cloak
         x-anchor.{{ $position }}.offset.6="$refs.trigger"
         x-transition.opacity.duration.120ms
